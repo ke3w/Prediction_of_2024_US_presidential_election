@@ -1,11 +1,9 @@
 #### Preamble ####
 # Purpose: Exploratory Data Analysis (EDA) and Modeling for US Election Forecast
-# Author: [Your Name]
-# Date: [Current Date]
-# Contact: [Your Contact Information]
+# Author: Xinze Wu
+# Date: 2 November 2024
+# Contact: kerwin.wu@utoronto.ca
 # License: MIT
-# Pre-requisites: Requires cleaned presidential polling data saved in 'data/02-analysis_data/cleaned_president_polls.csv'
-# Any other information needed? N/A
 
 
 #### Workspace setup ####

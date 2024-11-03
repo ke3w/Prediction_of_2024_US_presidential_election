@@ -1,59 +1,48 @@
 #### Preamble ####
-# Purpose: Exploratory Data Analysis (EDA) and Modeling for US Election Forecast
-# Author: [Your Name]
-# Date: [Current Date]
-# Contact: [Your Contact Information]
+# Purpose: Simulate a dataset for a U.S. Presidential Election analysis, including state, poll score, sample size, party affiliation, and vote percentage.
+# Author: Xinze Wu
+# Date: 2 November 2024
+# Contact: kerwin.wu@utoronto.ca
 # License: MIT
-# Pre-requisites: Requires cleaned presidential polling data saved in 'data/02-analysis_data/cleaned_president_polls.csv'
-# Any other information needed? N/A
-
 
 #### Workspace setup ####
 library(tidyverse)
-library(MASS)
-library(broom)
-library(knitr)
+set.seed(853) # Set seed for reproducibility
 
-#### Load data ####
-analysis_data <- read_csv("data/02-analysis_data/cleaned_president_polls.csv") %>% as_tibble()
+#### Simulate data ####
+# State names
+states <- c("Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado",
+            "Connecticut", "Delaware", "Florida", "Georgia", "Hawaii", "Idaho", 
+            "Illinois", "Indiana", "Iowa", "Kansas", "Kentucky", "Louisiana", 
+            "Maine", "Maryland", "Massachusetts", "Michigan", "Minnesota", 
+            "Mississippi", "Missouri", "Montana", "Nebraska", "Nevada", 
+            "New Hampshire", "New Jersey", "New Mexico", "New York", 
+            "North Carolina", "North Dakota", "Ohio", "Oklahoma", "Oregon", 
+            "Pennsylvania", "Rhode Island", "South Carolina", "South Dakota", 
+            "Tennessee", "Texas", "Utah", "Vermont", "Virginia", 
+            "Washington", "West Virginia", "Wisconsin", "Wyoming")
 
-#### Exploratory Data Analysis (EDA) ####
-# Summary statistics of key variables
-summary(analysis_data)
+# Political parties
+parties <- c("Democratic", "Republican")
 
-# Distribution of vote percentage (pct) by candidate
-analysis_data %>%
-  ggplot(aes(x = pct, fill = candidate_name)) +
-  geom_histogram(binwidth = 5, alpha = 0.7) +
-  labs(title = "Distribution of Vote Percentage by Candidate",
-       x = "Vote Percentage",
-       y = "Count",
-       fill = "Candidate") +
-  theme_minimal() +
-  theme(axis.text.x = element_text(size = 8),
-        axis.text.y = element_text(size = 8),
-        legend.text = element_text(size = 6))
+# Simulate poll scores, sample sizes, and vote percentages
+poll_scores <- rnorm(1000, mean = 0, sd = 1) # Simulate 1000 poll scores with a normal distribution
+sample_sizes <- sample(500:5000, 1000, replace = TRUE) # Simulate sample sizes between 500 and 5000
+states_sampled <- sample(states, 1000, replace = TRUE) # Randomly sample states
+parties_sampled <- sample(parties, 1000, replace = TRUE, prob = c(0.5, 0.5)) # Equal probability for both parties
+vote_percentages <- round(runif(1000, 30, 70), 2) # Simulate vote percentages between 30% and 70%
 
-# Average poll score by state
-analysis_data %>%
-  group_by(state) %>%
-  summarise(avg_pollscore = mean(pollscore, na.rm = TRUE)) %>%
-  ggplot(aes(x = reorder(state, -avg_pollscore), y = avg_pollscore)) +
-  geom_bar(stat = "identity", fill = "steelblue") +
-  labs(title = "Average Poll Score by State",
-       x = "State",
-       y = "Average Poll Score") +
-  theme_minimal() +
-  theme(axis.text.y = element_text(size = 5)) +
-  coord_flip()
+# Create a data frame
+simulated_election_data <- tibble(
+  state = states_sampled,
+  pollscore = poll_scores,
+  sample_size = sample_sizes,
+  party = parties_sampled,
+  vote_percentage = vote_percentages
+)
 
-#### Stepwise Feature Selection for GLM ####
-# Fit a full GLM with all predictors, excluding candidate names
-full_model <- glm(pct ~ pollscore + log_sample_size + state + pollster,
-                  data = analysis_data, family = gaussian())
+#### Save data ####
+write_csv(simulated_election_data, "data/simulated_data/us_election_simulated_data.csv")
 
-# Perform stepwise selection based on AIC
-stepwise_model <- stepAIC(full_model, direction = "both")
-
-# Summary of the selected model
-summary(stepwise_model)
+#### Display the simulated data ####
+print(simulated_election_data)
