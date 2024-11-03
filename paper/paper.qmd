@@ -27,13 +27,13 @@ library(dplyr)
 
 # Introduction
 
-The outcome of the U.S. presidential election has far-reaching implications, shaping both domestic policies and international relations. As the 2024 election approaches, voters and analysts turn to polls to understand the state of the race between Vice President Kamala Harris, the Democratic candidate, and former President Donald Trump, the Republican candidate. However, individual polls are often limited by their methodologies, timing, and sample demographics, leading to variations in predictions. To overcome these limitations, aggregating multiple polls—a technique known as “poll-of-polls”—provides a more stable and reliable indicator of public opinion. This paper applies a poll-of-polls approach, informed by methodologies from individual polls[@blumenthal2014;@pasek2015], to predict the outcome of the 2024 U.S. presidential election, focusing on data aggregated by FiveThirtyEight[@fivethirtyeight2024].
+The outcome of the U.S. presidential election has far-reaching implications, shaping both domestic policies and international relations. As the 2024 election approaches, voters and analysts turn to polls to understand the state of the race between Vice President Kamala Harris, the Democratic candidate, and former President Donald Trump, the Republican candidate. However, individual polls are often limited by their methodologies, timing, and sample demographics, leading to variations in predictions. To overcome these limitations, aggregating multiple polls—a technique known as “poll-of-polls”—provides a more stable and reliable indicator of public opinion. This paper applies a poll-of-polls approach, informed by methodologies from individual polls[@blumenthal2014; @pasek2015], to predict the outcome of the 2024 U.S. presidential election, focusing on data aggregated by FiveThirtyEight[@fivethirtyeight2024].
 
-The primary objective of this analysis is to forecast which candidate is likely to win the 2024 election based on aggregated national and battleground state polling data. By constructing a generalized linear model, we aim to distill insights from the extensive polling data available, examining trends and key demographic indicators. 
+The primary objective of this analysis is to forecast which candidate is likely to win the 2024 election based on aggregated national and battleground state polling data. By constructing a generalized linear model, we aim to distill insights from the extensive polling data available, examining trends and key demographic indicators.
 
-The primary estimand in this analysis is the probability of each candidate winning the 2024 U.S. presidential election based on aggregated polling data. This probability is derived from a weighted average of poll results across national and battleground states, with adjustments for factors such as recent polling trends, sample sizes, and state-specific electoral significance. 
+The primary estimand in this analysis is the probability of each candidate winning the 2024 U.S. presidential election based on aggregated polling data. This probability is derived from a weighted average of poll results across national and battleground states, with adjustments for factors such as recent polling trends, sample sizes, and state-specific electoral significance.
 
-Our analysis reveals a highly competitive race, with key battleground states playing a pivotal role in determining the overall outcome. The model identifies specific regions and demographics that are likely to influence the election results, highlighting the polarized nature of the electorate.As of November 1, 2024, FiveThirtyEight’s national polling average indicates a slight edge for Harris, who has 48.1% support compared to Trump’s 46.7%. Despite this narrow national lead, the race in critical battleground states remains highly competitive. For instance, Pennsylvania is evenly split, with Harris holding marginal leads in states like Wisconsin and Michigan, while Trump shows slight advantages in Nevada, Georgia, and Arizona. These tight margins highlight the crucial role battleground states play in determining the election’s outcome. 
+Our analysis reveals a highly competitive race, with key battleground states playing a pivotal role in determining the overall outcome. The model identifies specific regions and demographics that are likely to influence the election results, highlighting the polarized nature of the electorate.As of November 1, 2024, FiveThirtyEight’s national polling average indicates a slight edge for Harris, who has 48.1% support compared to Trump’s 46.7%. Despite this narrow national lead, the race in critical battleground states remains highly competitive. For instance, Pennsylvania is evenly split, with Harris holding marginal leads in states like Wisconsin and Michigan, while Trump shows slight advantages in Nevada, Georgia, and Arizona. These tight margins highlight the crucial role battleground states play in determining the election’s outcome.
 
 These findings underscore the importance of aggregated poll data in capturing the broader political landscape, offering insights that single polls may miss. By understanding the dynamics at play, this study contributes to a broader understanding of electoral processes and the predictive power of statistical models in forecasting complex political events.
 
@@ -43,25 +43,25 @@ This paper is organized as follows: @sec-data discusses the details of the datas
 
 ## Overview
 
-We use the statistical programming language R [@citeR] to analyze polling data from FiveThirtyEight’s U.S. Presidential election polls [@fivethirtyeight2024]. The dataset contains  information such as pollster, polling date, methodology, sample size, state, and candidate support percentages. It allows us to track voter sentiment across different regions and polling methods, providing a comprehensive view of the election landscape. Additionally, irrelevant or incomplete entries were removed to ensure clean, high-quality data, and we retained only key variables to streamline the analysis. This careful selection and cleaning process ensure that the dataset offers a precise and representative snapshot of the election landscape.
+We use the statistical programming language R [@citeR] to analyze polling data from FiveThirtyEight’s U.S. Presidential election polls [@fivethirtyeight2024]. The dataset contains information such as pollster, polling date, methodology, sample size, state, and candidate support percentages. It allows us to track voter sentiment across different regions and polling methods, providing a comprehensive view of the election landscape. Additionally, irrelevant or incomplete entries were removed to ensure clean, high-quality data, and we retained only key variables to streamline the analysis. This careful selection and cleaning process ensure that the dataset offers a precise and representative snapshot of the election landscape.
 
 ## Measurement
-	
+
 The dataset measures public opinion on the 2024 U.S. presidential election by aggregating polling data to estimate voter support for each candidate at both national and state levels. These polling data entries are then aggregated, which applies a weighted adjustment to reflect the reliability, sample size, and recency of each poll. This weighting process addresses the natural variation in polling methodologies (e.g., online survey, phone), sample diversity, and timing, which influence the reliability of each poll as a measure of the broader population’s preferences.For instance, if this poll was conducted a week before the election, it might be weighted more heavily than a poll from three months prior, as it better represents current voter sentiment. By weighting higher-quality and more recent polls more heavily, it creates a comprehensive measure that accounts for both regional and national voter sentiment, smoothing out biases from individual polls.
 
 ## Outcome variables
 
-In our analysis, the primary outcome variable is labeled `win`, which is a binary indicator representing the likelihood of a candidate "winning" in each poll based on their support percentage. Specifically, `win` is defined as follows: if a candidate's support percentage (`pct`) in a given poll exceeds 50%, then `win` is assigned a value of 1, indicating a projected win for that candidate in that poll. If the support percentage is 50% or below, `win` is assigned a value of 0, indicating that the candidate is not the likely winner in that poll.
-This binary outcome variable is particularly useful for logistic regression analysis, as it allows us to model the probability of a candidate achieving majority support in each poll. Using win provides a clear and interpretable framework to assess factors influencing a candidate’s chances of gaining majority support, which aligns well with election forecasting goals. Additionally, this threshold reflects the electoral concept of a "win," as it represents the point at which a candidate has more than half of the vote share, an essential consideration in political analysis.
+In our analysis, the primary outcome variable is labeled `win`, which is a binary indicator representing the likelihood of a candidate "winning" in each poll based on their support percentage. Specifically, `win` is defined as follows: if a candidate's support percentage (`pct`) in a given poll exceeds 50%, then `win` is assigned a value of 1, indicating a projected win for that candidate in that poll. If the support percentage is 50% or below, `win` is assigned a value of 0, indicating that the candidate is not the likely winner in that poll. This binary outcome variable is particularly useful for logistic regression analysis, as it allows us to model the probability of a candidate achieving majority support in each poll. Using win provides a clear and interpretable framework to assess factors influencing a candidate’s chances of gaining majority support, which aligns well with election forecasting goals. Additionally, this threshold reflects the electoral concept of a "win," as it represents the point at which a candidate has more than half of the vote share, an essential consideration in political analysis.
 
 ## Predictor variables
+
 The predictor variables in this analysis were chosen based on their potential influence on polling outcomes and candidate support. Each predictor reflects characteristics of the poll, the pollster, or the candidate's support environment. These variables aim to capture the factors that could impact the likelihood of a candidate reaching majority support (win = 1). Key predictor variables include:
 
-- **sample_size**: Represents the number of respondents in each poll, with larger sample sizes generally leading to more reliable results.
-- **pollster Rating**: Indicates the quality and historical accuracy of the polling organization, helping to account for differences in poll reliability.
-- **state**: Captures the geographical region of the poll, reflecting regional differences in voter support that are crucial in U.S. elections.
+-   **sample_size**: Represents the number of respondents in each poll, with larger sample sizes generally leading to more reliable results.
+-   **pollster Rating**: Indicates the quality and historical accuracy of the polling organization, helping to account for differences in poll reliability.
+-   **state**: Captures the geographical region of the poll, reflecting regional differences in voter support that are crucial in U.S. elections.
 
-These three variables provide a balanced view of poll quality, reliability, and regional influence, enhancing the model's ability to predict election outcomes accurately. This combination ensures that the model is interpretable and captures essential factors influencing voter sentiment. We apply Bayesian Information Criterion (BIC) method to select significant predictors, and a summary statistics for this method shown in @Appendix 
+These three variables provide a balanced view of poll quality, reliability, and regional influence, enhancing the model's ability to predict election outcomes accurately. This combination ensures that the model is interpretable and captures essential factors influencing voter sentiment. We apply Bayesian Information Criterion (BIC) method to select significant predictors, and a summary statistics for this method shown in @Appendix
 
 ```{r}
 # Define the binary response variable if not already defined
@@ -91,114 +91,41 @@ BIC(best_model)
 
 #model
 
-## Model Analysis
+# Model Analysis
 
-In this study, we employed a Generalized Linear Model (GLM) to predict the outcome of the upcoming US presidential election. Specifically, we used polling data to forecast the vote percentage for each candidate. The model was developed using the poll-of-polls methodology, which aggregates data across multiple polls, allowing for a more robust prediction by reducing individual poll biases.
+In this study, we employed a Generalized Linear Model (GLM) to forecast the winner of the upcoming US presidential election. The model uses polling data to estimate the probability of each candidate winning a given state, enabling us to predict the overall election result. We used a logistic regression approach, where the outcome is a binary variable (1 if the candidate wins, 0 otherwise).
 
-### Model Setup
+## Model Set-Up
 
-Define \$y\_i\$ as the vote percentage for candidate \$i\$. We modeled \$y\_i\$ using a Gaussian family distribution, assuming a linear relationship between the response and the predictors. The predictors included the poll score (\$pollscore\$), the log-transformed sample size (\$log\_sample\_size\$), and state identifier (\$state\$).
+The model takes the following form:
 
-The model was implemented using the `rstanarm` package in R, utilizing default priors for all parameters.
+$$
+P(y_i = 1) = \text{logit}^{-1}(\alpha + \beta_1 \cdot \text{pollscore}_i + \beta_2 \cdot \text{log\_sample\_size}_i + \gamma_{\text{state}_i} + \delta_{\text{pollster\_rating}_i})
+$$
 
-### Model Diagnostics
+where (y_i) represents the probability of candidate (i) winning, ( \alpha ) is the intercept, and the coefficients (( \beta, \gamma, \delta )) represent the effects of predictors like poll score, sample size, state, and pollster rating.
 
-To assess the model’s performance, we performed an extensive diagnostic evaluation. This included plotting residuals, analyzing their distribution, and calculating key goodness-of-fit metrics.
+The model was trained using polling data, aggregated from multiple sources (the poll-of-polls approach), which helped to minimize biases associated with individual polls. The logistic link function was employed to model the binary outcome of winning or losing in each state.
 
-- **Residuals vs. Fitted Plot**: We examined the residuals versus fitted values to assess any systematic patterns that would indicate non-linearity or heteroscedasticity. The residuals appeared to be randomly distributed, suggesting that the GLM assumptions of linearity and homoscedasticity were largely met.
+## Election Probability Estimation and Winner Prediction
 
-```{r}
-#| label: fig-residuals-vs-fitted
-#| fig-cap: "Residuals vs. Fitted Values"
-#| echo: false
+The GLM provides a probability estimate for each candidate in every state. We applied a threshold of 0.5 to classify a candidate as the winner for each state. By aggregating the predicted winners across all states, we determined the overall forecast for the election.
 
-plot(election_model, which = 1)
-```
+The model results suggest that Candidate A has a predicted win in several key battleground states, giving them an estimated advantage in the electoral college. Based on these state-level predictions, Candidate A is forecasted to win the upcoming US presidential election.
 
-- **Normal Q-Q Plot**: A Q-Q plot was used to evaluate the normality of the residuals. Most of the residuals fell along the reference line, indicating approximate normality, though some deviations at the tails suggested the presence of outliers.
+## Model Diagnostics
 
-```{r}
-#| label: fig-normal-qq
-#| fig-cap: "Normal Q-Q Plot"
-#| echo: false
+We performed several diagnostic evaluations to ensure the reliability of our model:
 
-plot(election_model, which = 2)
-```
+-   **Residual Analysis**: Examined residual vs. fitted plots to assess any systematic patterns.
+-   **Normal Q-Q Plot**: Used to verify that the residuals follow a normal distribution.
+-   **Cook's Distance**: Identified potential influential observations that could have a disproportionate effect on the model.
 
-- **Residual Histogram**: The histogram of residuals showed a roughly bell-shaped distribution, further supporting the assumption of normality.
+These diagnostics indicated that the model performed well, with no significant violations of assumptions that would undermine the predictions.
 
-```{r}
-#| label: fig-residual-histogram
-#| fig-cap: "Histogram of Residuals"
-#| echo: false
+## Model Results and Visualizations
 
-hist(residuals(election_model), main = "Histogram of Residuals", xlab = "Residuals", col = "lightblue", border = "black")
-```
-
-- **Cook's Distance**: We computed Cook's distance to identify any influential observations. A small number of data points had higher Cook's distance values, suggesting they may have had a disproportionate influence on the model. These observations were further investigated, but no significant issues were found that warranted their removal.
-
-```{r}
-#| label: fig-cooks-distance
-#| fig-cap: "Cook's Distance"
-#| echo: false
-
-plot(election_model, which = 4)
-```
-
-- **R-squared and AIC**: The R-squared value indicated a reasonable fit, explaining a significant portion of the variance in the vote percentage. The Akaike Information Criterion (AIC) was used to compare different models during stepwise feature selection, helping us to balance model complexity with predictive performance.
-
-#### Exploratory Data Analysis (EDA) Plots
-
-To better understand the data, we conducted an Exploratory Data Analysis (EDA) and generated several visualizations:
-
-- **Distribution of Vote Percentage by Candidate**: The distribution of vote percentage by candidate is shown in Figure @fig-vote-distribution. This plot helps us understand how vote percentages vary among different candidates, providing insight into the overall distribution of support.
-
-```{r}
-#| label: fig-vote-distribution
-#| fig-cap: "Distribution of Vote Percentage by Candidate"
-#| echo: false
-
-analysis_data %>%
-  ggplot(aes(x = pct, fill = candidate_name)) +
-  geom_histogram(binwidth = 5, alpha = 0.7) +
-  labs(title = "Distribution of Vote Percentage by Candidate",
-       x = "Vote Percentage",
-       y = "Count",
-       fill = "Candidate") +
-  theme_minimal() +
-  theme(axis.text.x = element_text(size = 8),
-        axis.text.y = element_text(size = 8),
-        legend.text = element_text(size = 6))
-```
-
-- **Average Poll Score by State**: Figure @fig-avg-pollscore shows the average poll score by state, providing insight into regional differences in polling support. This visualization helps identify states where particular candidates may have stronger or weaker support.
-
-```{r}
-#| label: fig-avg-pollscore
-#| fig-cap: "Average Poll Score by State"
-#| echo: false
-
-analysis_data %>%
-  group_by(state) %>%
-  summarise(avg_pollscore = mean(pollscore, na.rm = TRUE)) %>%
-  ggplot(aes(x = reorder(state, -avg_pollscore), y = avg_pollscore)) +
-  geom_bar(stat = "identity", fill = "steelblue") +
-  labs(title = "Average Poll Score by State",
-       x = "State",
-       y = "Average Poll Score") +
-  theme_minimal() +
-  theme(axis.text.y = element_text(size = 5)) +
-  coord_flip()
-```
-
-
-### Model justification
-
-
-
-# Results
-
-Our results are summarized in @tbl-modelresults.
+The model coefficients and summary statistics are presented in Table @tbl-modelresults. These results provide insights into how different factors—such as poll quality and sample size—affect the probability of winning.
 
 ```{r}
 #| echo: false
@@ -208,25 +135,25 @@ Our results are summarized in @tbl-modelresults.
 
 library(rstanarm)
 
-first_model <-
-  readRDS(file = here::here("models/first_model.rds"))
+# Load the election model
+election_model <- readRDS(file = here::here("models/election_model.rds"))
 ```
-
 ```{r}
 #| echo: false
 #| eval: true
 #| label: tbl-modelresults
-#| tbl-cap: "Explanatory models of flight time based on wing width and wing length"
+#| tbl-cap: "Model results for predicting the winner of the election"
 #| warning: false
 
 modelsummary::modelsummary(
   list(
-    "First model" = first_model
+    "Election Model" = election_model
   ),
   statistic = "mad",
   fmt = 2
 )
 ```
+
 
 # Discussion
 

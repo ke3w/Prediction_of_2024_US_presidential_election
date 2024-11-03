@@ -9,30 +9,33 @@
 
 #### Workspace setup ####
 library(tidyverse)
-library(MASS)
+library(gt)
+library(arrow)
 
 #### Load data ####
-# Load the polling data directly from the provided CSV file
-data_path <- "data/01-raw_data/president_polls.csv"
-election_data <- read_csv(data_path)
+election_data <- read_csv("data/01-raw_data/president_polls.csv")
 
 #### Clean data ####
 # Remove unnecessary columns and handle missing values
-cleaned_data <- election_data %>%
-  dplyr::select(poll_id, pollster, pollscore, sample_size, state, candidate_name, pct) %>%
-  filter(!is.na(pct) & sample_size > 0 & !is.na(pollscore) & !is.na(state) & !is.na(candidate_name) & !is.na(pollster)) %>% # Remove rows with any missing values
-  mutate(
-    state = as.factor(state),
-    pollster = as.factor(pollster),
-    candidate_name = as.factor(candidate_name),
-    log_sample_size = log(sample_size) # Log-transform sample size
+polls_data_cleaned <- election_data %>%
+  dplyr::select(pollscore, sample_size, state, party, candidate_name, pct, end_date) %>%
+  filter(!is.na(pollscore) & !is.na(sample_size) & !is.na(state) & !is.na(pct) & !is.na(end_date))
+
+# Create binary 'win' variable where pct > 50 is considered a win
+polls_data_cleaned <- polls_data_cleaned %>%
+  mutate(win = ifelse(pct > 50, 1, 0),
+         party_binary = ifelse(party == "DEM", 1, 0))
+
+# Display cleaned data
+polls_data_cleaned %>%
+  head() %>%
+  gt() %>%
+  tab_header(
+    title = "Cleaned Poll Data",
+    subtitle = "Displaying a few sample of the cleaned data"
   )
 
-# Remove outliers based on sample size
-cleaned_data <- cleaned_data %>%
-  filter(sample_size < quantile(sample_size, 0.99)) # Remove top 1% of sample sizes as outliers
-
-# Save the cleaned data
-write_csv(cleaned_data, "data/02-analysis_data/cleaned_president_polls.csv")
-
+#### Save data ####
+write_csv(polls_data_cleaned, "data/02-analysis_data/cleaned_president_polls.csv")
+write_parquet(polls_data_cleaned, "data/02-analysis_data/cleaned_president_polls.parquet")
 
