@@ -89,42 +89,70 @@ formula(best_model)
 BIC(best_model)
 ```
 
-# Model
+#model
+
+## Model Analysis
 
 In this study, we employed a Generalized Linear Model (GLM) to predict the outcome of the upcoming US presidential election. Specifically, we used polling data to forecast the vote percentage for each candidate. The model was developed using the poll-of-polls methodology, which aggregates data across multiple polls, allowing for a more robust prediction by reducing individual poll biases.
 
-## Model set-up
+### Model Setup
 
-Define $y_i$ as the vote percentage for candidate $i$. We modeled $y_i$ using a Gaussian family distribution, assuming a linear relationship between the response and the predictors. The predictors included the poll score ($pollscore$), the log-transformed sample size ($log_sample_size$), and state identifier ($state$).
+Define \$y\_i\$ as the vote percentage for candidate \$i\$. We modeled \$y\_i\$ using a Gaussian family distribution, assuming a linear relationship between the response and the predictors. The predictors included the poll score (\$pollscore\$), the log-transformed sample size (\$log\_sample\_size\$), and state identifier (\$state\$).
 
-\begin{align}
-y_i|\mu_i, \sigma &\sim \text{Normal}(\mu_i, \sigma) \\
-\mu_i &= \alpha + \beta_1 \cdot \text{pollscore}_i + \beta_2 \cdot \text{log\_sample\_size}_i + \gamma_{\text{state}_i} \\
-\alpha &\sim \text{Normal}(0, 2.5) \\
-\beta_1, \beta_2 &\sim \text{Normal}(0, 2.5) \\
-\gamma &\sim \text{Normal}(0, 2.5) \\
-\sigma &\sim \text{Exponential}(1)
-\end{align}
+The model was implemented using the `rstanarm` package in R, utilizing default priors for all parameters.
 
-The model was implemented using the rstanarm package in R, utilizing default priors for all parameters.
-
-## Model set-up
+### Model Diagnostics
 
 To assess the model’s performance, we performed an extensive diagnostic evaluation. This included plotting residuals, analyzing their distribution, and calculating key goodness-of-fit metrics.
 
-Residual vs. Fitted Plot: We examined the residuals versus fitted values to assess any systematic patterns that would indicate non-linearity or heteroscedasticity. The residuals appeared to be randomly distributed, suggesting that the GLM assumptions of linearity and homoscedasticity were largely met.
+- **Residuals vs. Fitted Plot**: We examined the residuals versus fitted values to assess any systematic patterns that would indicate non-linearity or heteroscedasticity. The residuals appeared to be randomly distributed, suggesting that the GLM assumptions of linearity and homoscedasticity were largely met.
 
-Normal Q-Q Plot: A Q-Q plot was used to evaluate the normality of the residuals. Most of the residuals fell along the reference line, indicating approximate normality, though some deviations at the tails suggested the presence of outliers.
+```{r}
+#| label: fig-residuals-vs-fitted
+#| fig-cap: "Residuals vs. Fitted Values"
+#| echo: false
 
-Residual Histogram: The histogram of residuals showed a roughly bell-shaped distribution, further supporting the assumption of normality.
+plot(election_model, which = 1)
+```
 
-Cook's Distance: We computed Cook's distance to identify any influential observations. A small number of data points had higher Cook's distance values, suggesting they may have had a disproportionate influence on the model. These observations were further investigated, but no significant issues were found that warranted their removal.
+- **Normal Q-Q Plot**: A Q-Q plot was used to evaluate the normality of the residuals. Most of the residuals fell along the reference line, indicating approximate normality, though some deviations at the tails suggested the presence of outliers.
 
-R-squared and AIC: The R-squared value indicated a reasonable fit, explaining a significant portion of the variance in the vote percentage. The Akaike Information Criterion (AIC) was used to compare different models during stepwise feature selection, helping us to balance model complexity with predictive performance.
+```{r}
+#| label: fig-normal-qq
+#| fig-cap: "Normal Q-Q Plot"
+#| echo: false
 
-##Exploratory Data Analysis (EDA) Plots
+plot(election_model, which = 2)
+```
 
-As shown in Figure @fig-vote-distribution, the distribution of vote percentages varies by candidate, with some candidates demonstrating stronger support than others.
+- **Residual Histogram**: The histogram of residuals showed a roughly bell-shaped distribution, further supporting the assumption of normality.
+
+```{r}
+#| label: fig-residual-histogram
+#| fig-cap: "Histogram of Residuals"
+#| echo: false
+
+hist(residuals(election_model), main = "Histogram of Residuals", xlab = "Residuals", col = "lightblue", border = "black")
+```
+
+- **Cook's Distance**: We computed Cook's distance to identify any influential observations. A small number of data points had higher Cook's distance values, suggesting they may have had a disproportionate influence on the model. These observations were further investigated, but no significant issues were found that warranted their removal.
+
+```{r}
+#| label: fig-cooks-distance
+#| fig-cap: "Cook's Distance"
+#| echo: false
+
+plot(election_model, which = 4)
+```
+
+- **R-squared and AIC**: The R-squared value indicated a reasonable fit, explaining a significant portion of the variance in the vote percentage. The Akaike Information Criterion (AIC) was used to compare different models during stepwise feature selection, helping us to balance model complexity with predictive performance.
+
+#### Exploratory Data Analysis (EDA) Plots
+
+To better understand the data, we conducted an Exploratory Data Analysis (EDA) and generated several visualizations:
+
+- **Distribution of Vote Percentage by Candidate**: The distribution of vote percentage by candidate is shown in Figure @fig-vote-distribution. This plot helps us understand how vote percentages vary among different candidates, providing insight into the overall distribution of support.
+
 ```{r}
 #| label: fig-vote-distribution
 #| fig-cap: "Distribution of Vote Percentage by Candidate"
@@ -143,7 +171,8 @@ analysis_data %>%
         legend.text = element_text(size = 6))
 ```
 
-Average Poll Score by State: Figure @fig-avg-pollscore shows the average poll score by state, providing insight into regional differences in polling support. This visualization helps identify states where particular candidates may have stronger or weaker support.
+- **Average Poll Score by State**: Figure @fig-avg-pollscore shows the average poll score by state, providing insight into regional differences in polling support. This visualization helps identify states where particular candidates may have stronger or weaker support.
+
 ```{r}
 #| label: fig-avg-pollscore
 #| fig-cap: "Average Poll Score by State"
@@ -162,7 +191,6 @@ analysis_data %>%
   coord_flip()
 ```
 
-Overall, the diagnostic evaluation suggested that the model provided a good fit for the data, with no major violations of GLM assumptions.
 
 ### Model justification
 
