@@ -1,5 +1,5 @@
 #### Preamble ####
-# Purpose: Simulate a dataset for a U.S. Presidential Election analysis, including state, poll score, sample size, party affiliation, and vote percentage.
+# Purpose: Simulate a dataset for a U.S. Presidential Election analysis
 # Author: Xinze Wu
 # Date: 2 November 2024
 # Contact: kerwin.wu@utoronto.ca
