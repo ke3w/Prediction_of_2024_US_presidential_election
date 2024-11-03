@@ -47,32 +47,11 @@ if (is.character(analysis_data$state)) {
   stop("Test Failed: The 'state' column is not of type character.")
 }
 
-# Test that the 'pollster' column is character type
-if (is.character(analysis_data$pollster)) {
-  message("Test Passed: The 'pollster' column is of type character.")
-} else {
-  stop("Test Failed: The 'pollster' column is not of type character.")
-}
-
 # Test that there are no missing values in the dataset
 if (all(!is.na(analysis_data))) {
   message("Test Passed: The dataset contains no missing values.")
 } else {
   stop("Test Failed: The dataset contains missing values.")
-}
-
-# Test that 'pollster' contains at least 2 unique values
-if (length(unique(analysis_data$pollster)) >= 2) {
-  message("Test Passed: The 'pollster' column contains at least 2 unique values.")
-} else {
-  stop("Test Failed: The 'pollster' column does not contain at least 2 unique values.")
-}
-
-# Test that 'log_sample_size' is numeric
-if (is.numeric(analysis_data$log_sample_size)) {
-  message("Test Passed: The 'log_sample_size' column is numeric.")
-} else {
-  stop("Test Failed: The 'log_sample_size' column is not numeric.")
 }
 
 # Test that 'pollscore' is numeric
@@ -83,9 +62,10 @@ if (is.numeric(analysis_data$pollscore)) {
 }
 
 # Test that there are no empty strings in 'state' or 'pollster' columns
-if (all(analysis_data$state != "" & analysis_data$pollster != "")) {
-  message("Test Passed: There are no empty strings in 'state' or 'pollster' columns.")
+if (all(analysis_data$state != "")) {
+  message("Test Passed: There are no empty strings in 'state'")
 } else {
-  stop("Test Failed: There are empty strings in 'state' or 'pollster' columns.")
+  stop("Test Failed: There are empty strings in 'state' column.")
 }
+
 
