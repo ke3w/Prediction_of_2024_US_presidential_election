@@ -22,7 +22,6 @@ library(tidyverse)
 library(palmerpenguins)
 ```
 
-
 # Introduction
 
 Overview paragraph
@@ -35,11 +34,6 @@ Why it matters paragraph
 
 Telegraphing paragraph: The remainder of this paper is structured as follows. @sec-data....
 
-
-
-
-
-
 # Data {#sec-data}
 
 ## Overview
@@ -49,14 +43,12 @@ We use the statistical programming language R [@citeR].... Our data [@shelter]..
 Overview text
 
 ## Measurement
-	
+
 Some paragraphs about how we go from a phenomena in the world to an entry in the dataset.
 
 ## Outcome variables
 
 Add graphs, tables and text. Use sub-sub-headings for each outcome variable or update the subheading to be singular.
-
-
 
 Some of our data is of penguins (@fig-bills), from @palmerpenguins.
 
@@ -95,7 +87,7 @@ analysis_data |>
        y = "Wing length (mm)")
 ```
 
-Talk way more about it. 
+Talk way more about it.
 
 ## Predictor variables
 
@@ -103,40 +95,39 @@ Add graphs, tables and text.
 
 Use sub-sub-headings for each outcome variable and feel free to combine a few into one if they go together naturally.
 
-
-
-
-
-
-
-
 # Model
 
-The goal of our modelling strategy is twofold. Firstly,...
-
-Here we briefly describe the Bayesian analysis model used to investigate... Background details and diagnostics are included in [Appendix -@sec-model-details].
+In this study, we employed a Generalized Linear Model (GLM) to predict the outcome of the upcoming US presidential election. Specifically, we used polling data to forecast the vote percentage for each candidate. The model was developed using the poll-of-polls methodology, which aggregates data across multiple polls, allowing for a more robust prediction by reducing individual poll biases. [Appendix -@sec-model-details].
 
 ## Model set-up
 
-Define $y_i$ as the number of seconds that the plane remained aloft. Then $\beta_i$ is the wing width and $\gamma_i$ is the wing length, both measured in millimeters.  
+Define $y_i$ as the vote percentage for candidate $i$. We modeled $y_i$ using a Gaussian family distribution, assuming a linear relationship between the response and the predictors. The predictors included the poll score ($pollscore$), the log-transformed sample size ($log_sample_size$), and state identifier ($state$).
 
-\begin{align} 
-y_i|\mu_i, \sigma &\sim \mbox{Normal}(\mu_i, \sigma) \\
-\mu_i &= \alpha + \beta_i + \gamma_i\\
-\alpha &\sim \mbox{Normal}(0, 2.5) \\
-\beta &\sim \mbox{Normal}(0, 2.5) \\
-\gamma &\sim \mbox{Normal}(0, 2.5) \\
-\sigma &\sim \mbox{Exponential}(1)
+\begin{align}
+y_i|\mu_i, \sigma &\sim \text{Normal}(\mu_i, \sigma) \\
+\mu_i &= \alpha + \beta_1 \cdot \text{pollscore}_i + \beta_2 \cdot \text{log\_sample\_size}_i + \gamma_{\text{state}_i} \\
+\alpha &\sim \text{Normal}(0, 2.5) \\
+\beta_1, \beta_2 &\sim \text{Normal}(0, 2.5) \\
+\gamma &\sim \text{Normal}(0, 2.5) \\
+\sigma &\sim \text{Exponential}(1)
 \end{align}
 
-We run the model in R [@citeR] using the `rstanarm` package of @rstanarm. We use the default priors from `rstanarm`.
+The model was implemented using the rstanarm package in R, utilizing default priors for all parameters.
 
+To assess the model’s performance, we performed an extensive diagnostic evaluation. This included plotting residuals, analyzing their distribution, and calculating key goodness-of-fit metrics.
+
+Residual vs. Fitted Plot: We examined the residuals versus fitted values to assess any systematic patterns that would indicate non-linearity or heteroscedasticity. The residuals appeared to be randomly distributed, suggesting that the GLM assumptions of linearity and homoscedasticity were largely met.
+
+Normal Q-Q Plot: A Q-Q plot was used to evaluate the normality of the residuals. Most of the residuals fell along the reference line, indicating approximate normality, though some deviations at the tails suggested the presence of outliers.
+
+Residual Histogram: The histogram of residuals showed a roughly bell-shaped distribution, further supporting the assumption of normality.
+
+Cook's Distance: We computed Cook's distance to identify any influential observations. A small number of data points had higher Cook's distance values, suggesting they may have had a disproportionate influence on the model. These observations were further investigated, but no significant issues were found that warranted their removal.
+
+R-squared and AIC: The R-squared value indicated a reasonable fit, explaining a significant portion of the variance in the vote percentage. The Akaike Information Criterion (AIC) was used to compare different models during stepwise feature selection, helping us to balance model complexity with predictive performance.
 
 ### Model justification
 
-We expect a positive relationship between the size of the wings and time spent aloft. In particular...
-
-We can use maths by including latex between dollar signs, for instance $\theta$.
 
 
 # Results
@@ -171,14 +162,11 @@ modelsummary::modelsummary(
 )
 ```
 
-
-
-
 # Discussion
 
 ## First discussion point {#sec-first-point}
 
-If my paper were 10 pages, then should be be at least 2.5 pages. The discussion is a chance to show off what you know and what you learnt from all this. 
+If my paper were 10 pages, then should be be at least 2.5 pages. The discussion is a chance to show off what you know and what you learnt from all this.
 
 ## Second discussion point
 
@@ -194,8 +182,7 @@ Weaknesses and next steps should also be included.
 
 \appendix
 
-# Appendix {-}
-
+# Appendix {.unnumbered}
 
 # Additional data details
 
@@ -205,7 +192,7 @@ Weaknesses and next steps should also be included.
 
 In @fig-ppcheckandposteriorvsprior-1 we implement a posterior predictive check. This shows...
 
-In @fig-ppcheckandposteriorvsprior-2 we compare the posterior with the prior. This shows... 
+In @fig-ppcheckandposteriorvsprior-2 we compare the posterior with the prior. This shows...
 
 ```{r}
 #| eval: true
@@ -249,11 +236,6 @@ plot(first_model, "trace")
 plot(first_model, "rhat")
 ```
 
-
-
 \newpage
 
-
 # References
-
-
