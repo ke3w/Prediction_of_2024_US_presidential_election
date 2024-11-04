@@ -19,13 +19,18 @@ bibliography: references.bib
 #| warning: false
 #| message: false
 
+# Load required libraries
 library(tidyverse)
 library(ggplot2)
 library(MASS)
 library(dplyr)
 library(rstanarm)
 library(maps)
+library(arrow)  # Ensure arrow is loaded to use read_parquet()
+
+# Read the dataset using arrow
 data <- read_parquet("../data/02-analysis_data/cleaned_president_polls.parquet")
+
 ```
 
 # Introduction
