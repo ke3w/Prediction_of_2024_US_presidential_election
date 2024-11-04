@@ -7,89 +7,71 @@
 
 #### Workspace setup ####
 library(tidyverse)
-library(ggplot2)
-library(gt)
+library(rstanarm)
+library(arrow)
+library(maps)
 
-#### Load cleaned data ####
-polls_data_cleaned <- read_csv("data/02-analysis_data/cleaned_president_polls.csv")
+#### Read upcoming presidential election forecast data ####
+clean_president_polls <- read_parquet("data/02-analysis_data/clean_president_polls.parquet")
 
 #### Summary Statistics ####
-# Summary of numeric variables
-summary_stats <- polls_data_cleaned %>%
-  summarise(
-    avg_pollscore = mean(pollscore, na.rm = TRUE),
-    avg_sample_size = mean(sample_size, na.rm = TRUE),
-    avg_pct = mean(pct, na.rm = TRUE),
-    win_rate = mean(win, na.rm = TRUE)
-  )
+summary_table <- clean_president_polls %>%
+  summarize(
+    mean_pct = mean(pct, na.rm = TRUE),
+    sd_pct = sd(pct, na.rm = TRUE),
+    min_pct = min(pct, na.rm = TRUE),
+    max_pct = max(pct, na.rm = TRUE),
+    mean_sample_size = mean(sample_size, na.rm = TRUE),
+    sd_sample_size = sd(sample_size, na.rm = TRUE),
+    min_sample_size = min(sample_size, na.rm = TRUE),
+    max_sample_size = max(sample_size, na.rm = TRUE)
+  ) %>%
+  pivot_longer(cols = everything(), names_to = "Statistic", values_to = "Value")
 
-# Display summary statistics
-summary_stats %>%
-  gt() %>%
-  tab_header(
-    title = "Summary Statistics of Cleaned Poll Data",
-    subtitle = "Average values for key variables"
-  )
+#### Plot 1: Distribution of Candidate Support Percentages ####
+ggplot(clean_president_polls, aes(x = pct, fill = candidate_name)) +
+  geom_histogram(bins = 20, color = "black", alpha = 0.7) +
+  labs(title = "Distribution of Candidate Support Percentages", 
+       x = "Percentage", 
+       y = "Frequency", 
+       fill = "Candidate Name") +
+  facet_wrap(~ candidate_name)
 
-#### Distribution Plots ####
-# Poll percentage distribution by party
-polls_data_cleaned %>%
-  ggplot(aes(x = pct, fill = party)) +
-  geom_histogram(binwidth = 2, alpha = 0.7, position = "identity") +
-  labs(
-    title = "Distribution of Poll Percentages by Party",
-    x = "Poll Percentage",
-    y = "Count"
-  ) +
-  theme_minimal()
+#### Plot 2: Distribution of Polls by Pollster ####
+pollsters_over_20 <- clean_president_polls %>%
+  count(pollster) %>%
+  filter(n > 20)
 
-# Sample size distribution
-polls_data_cleaned %>%
-  ggplot(aes(x = sample_size)) +
-  geom_histogram(binwidth = 500, fill = "steelblue", alpha = 0.7) +
-  labs(
-    title = "Distribution of Sample Sizes",
-    x = "Sample Size",
-    y = "Count"
-  ) +
-  theme_minimal()
+ggplot(pollsters_over_20, aes(x = reorder(pollster, -n), y = n)) +
+  geom_bar(stat = "identity", fill = "blue", alpha = 0.7) +
+  labs(title = "Distribution of Polls by Pollster", x = "Pollster", y = "Number of Polls") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
-# Poll score by state
-polls_data_cleaned %>%
-  ggplot(aes(x = reorder(state, pollscore, FUN = median), y = pollscore)) +
-  geom_boxplot(fill = "lightgreen", alpha = 0.7) +
-  coord_flip() +
-  labs(
-    title = "Poll Scores by State",
-    x = "State",
-    y = "Poll Score"
-  ) +
-  theme_minimal()
+#### Plot 3: Distribution of Polls by State ####
+state_counts <- clean_president_polls %>%
+  count(state)
 
-#### Relationship Analysis ####
-# Poll percentage vs. sample size colored by party
-polls_data_cleaned %>%
-  ggplot(aes(x = sample_size, y = pct, color = party)) +
-  geom_point(alpha = 0.6) +
-  labs(
-    title = "Poll Percentage vs. Sample Size by Party",
-    x = "Sample Size",
-    y = "Poll Percentage"
-  ) +
-  theme_minimal()
+ggplot(state_counts, aes(x = reorder(state, -n), y = n)) +
+  geom_bar(stat = "identity", fill = "green", alpha = 0.7) +
+  labs(title = "Number of Polls by State", x = "State", y = "Number of Polls") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
 
-# Average poll percentage by party
-avg_pct_party <- polls_data_cleaned %>%
-  group_by(party) %>%
-  summarise(avg_pct = mean(pct, na.rm = TRUE))
+#### Plot 4: Distribution of Poll Sample Sizes ####
+ggplot(clean_president_polls, aes(x = sample_size)) +
+  geom_histogram(aes(y = ..density..), bins = 30, fill = "orange", color = "black", alpha = 0.7) +
+  geom_density(color = "blue", size = 1) +
+  labs(title = "Distribution of Poll Sample Sizes with Density Curve", 
+       x = "Sample Size", 
+       y = "Density") +
+  scale_x_continuous(labels = scales::comma)
 
-# Display average poll percentage by party
-avg_pct_party %>%
-  gt() %>%
-  tab_header(
-    title = "Average Poll Percentage by Party",
-    subtitle = "Comparison of average poll percentages between parties"
-  )
+#### Plot 5: Distribution of Polls by Harris vs Trump ####
+clean_president_polls <- clean_president_polls %>%
+  mutate(candidate_label = ifelse(is_harris == 1, "Harris", "Trump"))
+
+ggplot(clean_president_polls, aes(x = candidate_label)) +
+  geom_bar(fill = "purple", alpha = 0.7) +
+  labs(title = "Distribution of Polls by Harris vs Trump", x = "Candidate", y = "Number of Polls")
 
 #### Save EDA Results ####
 # Save summary statistics as CSV
