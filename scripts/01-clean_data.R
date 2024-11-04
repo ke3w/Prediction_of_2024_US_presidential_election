@@ -14,7 +14,7 @@ library(lubridate)
 
 
 #### Clean data ####
-clean_president_polls <- read_csv("data/01-raw_data/raw_president_polls.csv", 
+clean_president_polls <- read_csv("data/01-raw_data/president_polls.csv", 
                                   col_types = cols(poll_id = col_skip(), 
                                                    pollster_id = col_skip(), sponsor_ids = col_skip(), 
                                                    sponsors = col_skip(), display_name = col_skip(), 
@@ -68,12 +68,10 @@ clean_president_polls <- clean_president_polls %>%
 #### Identify, Count, and Drop Duplicates ####
 # Identify duplicates
 duplicates <- clean_president_polls[duplicated(clean_president_polls), ]
-num_duplicates <- nrow(duplicates)
-message("Number of duplicate observations: ", num_duplicates)
 
 # Drop duplicates and keep only unique rows
 clean_president_polls <- clean_president_polls[!duplicated(clean_president_polls), ]
 message("Number of rows after removing duplicates: ", nrow(clean_president_polls))
 
 #### Save data ####
-write_parquet(clean_president_polls, "data/02-analysis_data/clean_president_polls.parquet")
+write_parquet(clean_president_polls, "data/02-analysis_data/cleaned_president_polls.parquet")
