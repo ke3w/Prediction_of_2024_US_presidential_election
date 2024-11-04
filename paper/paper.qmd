@@ -51,7 +51,7 @@ This paper is organized as follows: @sec-data discusses the details of the datas
 
 ## Overview
 
-We use the statistical programming language R [@citeR] to analyze polling data from FiveThirtyEight’s U.S. Presidential election polls [@fivethirtyeight2024]. The dataset contains information such as pollster, polling date, methodology, sample size, state, and candidate support percentages. It allows us to track voter sentiment across different regions and polling methods, providing a comprehensive view of the election landscape. Additionally, irrelevant or incomplete entries were removed to ensure clean, high-quality data, and we retained only key variables to streamline the analysis. This careful selection and cleaning process ensure that the dataset offers a precise and representative snapshot of the election landscape.
+We use the statistical programming language R [@citeR] to analyze polling data from FiveThirtyEight’s U.S. Presidential election polls [@FiveThirtyEight2024]. The dataset contains information such as pollster, polling date, methodology, sample size, state, and candidate support percentages. It allows us to track voter sentiment across different regions and polling methods, providing a comprehensive view of the election landscape. Additionally, irrelevant or incomplete entries were removed to ensure clean, high-quality data, and we retained only key variables to streamline the analysis. This careful selection and cleaning process ensure that the dataset offers a precise and representative snapshot of the election landscape.
 
 ## Measurement
 
@@ -104,7 +104,7 @@ where:
 
 -   "pct" is the percentage of support that Harris received in the poll.
 
--   "pollster" represents the polling organization, modeled as a random effect to account for differences in reliability or bias between pollsters.
+-   "pollster" represents the polling organization, modeled as a random effect to account for differences in reliability or bias between pollsters[@keyfitz1951sampling].
 
 -   "state" represents the U.S. state where the polling data was collected, also modeled as a random effect to capture variability between states.
 
@@ -159,7 +159,7 @@ These assumptions are important to validate the reliability and interpretability
 
 ## Model Fitting in R
 
-The model fitting was performed using the `rstanarm` package, which allows for Bayesian inference using Markov Chain Monte Carlo (MCMC) methods. Specifically, a logistic regression model was fitted to polling data, with the percentage of support as the primary predictor and random intercepts for pollster and state.
+The model fitting was performed using the `rstanarm`[@rstanarm] package, which allows for Bayesian inference using Markov Chain Monte Carlo (MCMC) methods. Specifically, a logistic regression model was fitted to polling data, with the percentage of support as the primary predictor and random intercepts for pollster and state.
 
 The priors were chosen as normally distributed with a mean of 0.5 and a standard deviation of 0.1, allowing for some uncertainty in the initial model estimates:
 
@@ -177,7 +177,7 @@ The model's output includes estimates for each predictor, which provide insights
 
 ### Model Fit and Diagnostics
 
-The model fit was evaluated using posterior predictive checks and residual diagnostics. The Bayesian logistic regression was fit with priors centered at 0.5, reflecting uncertainty in the initial estimates.
+The model fit was evaluated using posterior predictive checks [@broom] and residual diagnostics. The Bayesian logistic regression was fit with priors centered at 0.5, reflecting uncertainty in the initial estimates.
 
 Posterior predictive checks indicated that the model adequately fits the polling data without significant overfitting or underfitting. Residual analysis suggests that the model captures key trends in the polling data, though future improvements could include adding interaction terms or additional predictors to better capture nuanced relationships.
 
