@@ -103,8 +103,8 @@ The predictor variables in this analysis were chosen based on their potential in
 
 These three variables provide a balanced view of poll quality, reliability, and regional influence, enhancing the model's ability to predict election outcomes accurately. This combination ensures that the model is interpretable and captures essential factors influencing voter sentiment. The variables are selected by their theoretical relevance and practical influence on polling outcomes, and a summary statistics for this  shown in @sec-Methodology.
 
+## Data visualization 
 
-##Data visualization 
 ### Heatmap of Polling Percentage by State for Selected Pollsters
 ```{r}
 #| warning: false
