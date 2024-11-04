@@ -36,7 +36,7 @@ data <- read_parquet("../data/02-analysis_data/cleaned_president_polls.parquet")
 
 # Introduction
 
-The outcome of the U.S. presidential election has far-reaching implications, shaping both domestic policies and international relations. As the 2024 election approaches, voters and analysts turn to polls to understand the state of the race between Vice President Kamala Harris, the Democratic candidate, and former President Donald Trump, the Republican candidate. However, individual polls are often limited by their methodologies, timing, and sample demographics, leading to variations in predictions. To overcome these limitations, aggregating multiple polls—a technique known as “poll-of-polls”—provides a more stable and reliable indicator of public opinion. This paper applies a poll-of-polls approach, informed by methodologies from individual polls [@blumenthal2014; @pasek2015], to predict the outcome of the 2024 U.S. presidential election, focusing on data aggregated by FiveThirtyEight [@fivethirtyeight2024].
+The outcome of the U.S. presidential election has far-reaching implications, shaping both domestic policies and international relations. As the 2024 election approaches, voters and analysts turn to polls to understand the state of the race between Vice President Kamala Harris, the Democratic candidate, and former President Donald Trump, the Republican candidate. However, individual polls are often limited by their methodologies, timing, and sample demographics, leading to variations in predictions. To overcome these limitations, aggregating multiple polls—a technique known as “poll-of-polls”—provides a more stable and reliable indicator of public opinion. This paper applies a poll-of-polls approach, informed by methodologies from individual polls [@blumenthal2014; @pasek2015], to predict the outcome of the 2024 U.S. presidential election, focusing on data aggregated by FiveThirtyEight [@FiveThirtyEight2024].
 
 The primary objective of this analysis is to forecast which candidate is likely to win the 2024 election based on aggregated national and battleground state polling data. By constructing a Bayesian generalized linear mixed model (GLMM), we aim to distill insights from the extensive polling data available, examining trends and key demographic indicators while accounting for inherent variability between pollsters and states.
 
@@ -52,7 +52,7 @@ This paper is organized as follows: @sec-data discusses the details of the datas
 
 ## Overview
 
-We use the statistical programming language R [@citeR] to analyze polling data from FiveThirtyEight’s U.S. Presidential election polls [@fivethirtyeight2024]. The dataset contains information such as pollster, polling date, methodology, sample size, state, and candidate support percentages. It allows us to track voter sentiment across different regions and polling methods, providing a comprehensive view of the election landscape. Additionally, irrelevant or incomplete entries were removed to ensure clean, high-quality data, and we retained only key variables to streamline the analysis. This careful selection and cleaning process ensure that the dataset offers a precise and representative snapshot of the election landscape.
+We use the statistical programming language R [@citeR] to analyze polling data from FiveThirtyEight’s U.S. Presidential election polls [@FiveThirtyEight2024]. The dataset contains information such as pollster, polling date, methodology, sample size, state, and candidate support percentages. It allows us to track voter sentiment across different regions and polling methods, providing a comprehensive view of the election landscape. Additionally, irrelevant or incomplete entries were removed to ensure clean, high-quality data, and we retained only key variables to streamline the analysis. This careful selection and cleaning process ensure that the dataset offers a precise and representative snapshot of the election landscape.
 
 ## Measurement
 
@@ -103,7 +103,7 @@ The predictor variables in this analysis were chosen based on their potential in
 
 -   **State**: The model also accounts for variability between states, which helps to capture regional differences in voter sentiment.
 
-These three variables provide a balanced view of poll quality, reliability, and regional influence, enhancing the model's ability to predict election outcomes accurately. This combination ensures that the model is interpretable and captures essential factors influencing voter sentiment. The variables are selected by their theoretical relevance and practical influence on polling outcomes, and a summary statistics for this shown in @sec-Methodology.
+These three variables provide a balanced view of poll quality, reliability, and regional influence, enhancing the model's ability to predict election outcomes accurately. This combination ensures that the model is interpretable and captures essential factors influencing voter sentiment. The variables are selected by their theoretical relevance and practical influence on polling outcomes, and a summary statistics for this shown in @sec-data.
 
 ## Data visualization
 
@@ -149,7 +149,7 @@ ggplot(filtered_data, aes(x = state, y = pollster, fill = avg_pct)) +
 
 Each cell in the heatmap represents the level of support reported by a pollster in a specific state, with darker shades of blue indicating higher levels of support (closer to 49%) and lighter shades indicating lower support (around 45%). This color gradient allows us to quickly assess the intensity of support in each state as reported by different pollsters. We observe that some states, such as Florida and North Carolina, have darker shades across multiple pollsters, indicating consistently higher support levels. Conversely, states like New York and New Mexico show lighter shades, suggesting lower support. The variability in color intensity across different pollsters in certain states (e.g., Pennsylvania and Nevada) highlights differences in polling results, which could stem from differences in sampling methods, demographic coverage, or timing. This visualization helps identify trends in regional support and provides insight into how different polling organizations might report support levels differently, offering a comprehensive view of the polling landscape.
 
-###Average Polling Percentage Over time by Candidate
+### Average Polling Percentage Over time by Candidate
 
 ```{r}
 #| warning: false
@@ -368,7 +368,7 @@ clean_president_polls %>%
 
 These visualizations provide a comprehensive overview of the model's predictive power across different states and help illustrate the distribution of predicted probabilities for Kamala Harris. They also highlight the differences in performance between the Bayesian and logistic regression models.
 
-# result
+# Result
 
 ```{r}
 #| label: tbl-1

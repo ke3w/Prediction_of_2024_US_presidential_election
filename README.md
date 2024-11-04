@@ -1,25 +1,17 @@
 # Prediction of 2024 U.S Presidential election
 
-## Overview
+##Overview
+This repository contains the prediction of the 2024 U.S. Presidential Election using a Bayesian logistic regression model based on polling data. By incorporating key variables—such as polling percentage, pollster, and state—and adjusting for poll quality and sample size, the model accounts for both polling variability and regional demographics. Geographic analysis revealed that Harris holds a slight overall lead, with strong support in western and northeastern states, while Trump has concentrated support in central regions. Several battleground states, including Michigan, Nevada, and Pennsylvania, were identified as crucial to determining the outcome. Our findings underscore the value of state-specific polling data and probabilistic modeling in capturing the nuanced dynamics of voter sentiment across different regions. This approach provides a granular and adaptable forecast of electoral outcomes, predicting a competitive race with a slight advantage for Harris. This repository also contains an analysis of Ipsos polling methodology and a designed idealized mythology. Some of the R code used to create this work was adapted from Alexander (2023).
 
-This project uses a linear or generalized linear model to forecast the outcome of the upcoming U.S. presidential 
-election, based on aggregated polling data (“poll-of-polls”) following methodologies outlined by Blumenthal (2014) 
-and Pasek (2015). This approach leverages multiple polls to predict trends, and ultimately forecast the popular vote.
-Our analysis includes two detailed appendices on a chosen pollster’s methodology and a proposed ideal survey, alongside 
-data-driven forecasting models and insights.
-
-## File Structure
-
+##File Structure
 The repo is structured as:
+inputs/data/raw_data contains the raw data used in this investigation.
+inputs/data/analysis_data contains the cleaned dataset that was constructed.
+models contains fitted models.
+other contains copies of LLM conversations, references used in this analysis, along with sketches of the dataset and graphs featured in this report..
+outputs/data contains the cleaned data utilized for analysis in this paper, as well as the simulated data used for testing purposes.
+outputs/paper contains a PDF version of the final paper, the Quarto file used to generate the PDF, and a file with the paper's references.
+scripts contains R scripts for data simulation, downloading, cleaning, and testing.
 
--   `data/raw_data` contains the raw data as obtained from "https://projects.fivethirtyeight.com/polls/president-general/2024/national/".
--   `data/analysis_data` contains the cleaned dataset that was constructed.
--   `model` contains fitted models. 
--   `other` contains relevant details about LLM chat interactions.
--   `paper` contains the files used to generate the paper, including the Quarto document and reference bibliography file, as well as the PDF of the paper. 
--   `scripts` contains the R scripts used to simulate, download and clean data.
-
-
-## Statement on LLM usage
-
-Aspects of the code were written with the help of the auto-complete tool, Codriver. The abstract and introduction were written with the help of ChatHorse and the entire chat history is available in inputs/llms/usage.txt.
+# Statement on LLM usage
+Aspects of the code were written with the help of the AI tool, Chatgpt. The abstract, introduction methodology and appendix were written with the help of Chatgpt and the entire chat history is available in inputs/llms/usage.txt.
