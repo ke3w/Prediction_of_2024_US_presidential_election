@@ -8,44 +8,117 @@
 #### Workspace setup ####
 library(tidyverse)
 library(rstanarm)
-library(ggplot2)
+library(arrow)
+library(rsample)
+library(performance)
 
-#### Load cleaned data ####
-polls_data_cleaned <- read_csv("data/02-analysis_data/cleaned_president_polls.csv")
+#### Read upcoming presidential election forecast data ####
+clean_president_polls <- read_parquet("data/02-analysis_data/cleaned_president_polls.parquet")
 
-#### Model Setup ####
-# Build a logistic regression model to predict the probability of winning (binary outcome: win)
-win_model <- stan_glm(
-  formula = win ~ pollscore + sample_size + party_binary + pct,
-  data = polls_data_cleaned,
-  family = binomial(link = "logit"),
-  prior = normal(location = 0, scale = 2.5, autoscale = TRUE),
-  prior_intercept = normal(location = 0, scale = 2.5, autoscale = TRUE),
-  seed = 853
-)
-
-#### Model Summary ####
-# Print model summary to understand the significance of each predictor
-print(summary(win_model))
-
-#### Predicting Outcomes ####
-# Generate predicted probabilities of winning
-polls_data_cleaned <- polls_data_cleaned %>%
-  mutate(predicted_win_prob = predict(win_model, type = "response"))
-
-# Display a few rows of data with predicted probabilities
-polls_data_cleaned %>%
-  dplyr::select(state, candidate_name, pct, predicted_win_prob) %>%
-  head() %>%
-  gt() %>%
-  tab_header(
-    title = "Predicted Win Probabilities",
-    subtitle = "Displaying a few sample predictions"
+#### Add Weights and Prepare Dataset ####
+clean_president_polls <- clean_president_polls %>%
+  mutate(
+    weight = numeric_grade * (sample_size / mean(sample_size)),
+    pollster = as.factor(pollster),
+    state = as.factor(state),
+    candidate_label = ifelse(is_harris == 1, "Harris", "Trump")
   )
 
-#### Save Model and Predictions ####
-# Save the model for future use
-saveRDS(win_model, "models/election_win_model.rds")
+#### Bayesian Model ####
+set.seed(437)
 
-# Save the data with predictions
-write_csv(polls_data_cleaned, "data/04-model_results/polls_with_predictions.csv")
+# Fit Bayesian model
+bayesian_model <- stan_glmer(
+  is_harris ~ pct + (1 | pollster) + (1 | state),
+  data = clean_president_polls,
+  family = binomial(link = "logit"),
+  prior = normal(0.5, 0.1, autoscale = TRUE),
+  prior_intercept = normal(0.5, 0.1, autoscale = TRUE),
+  weights = weight,
+  cores = 4,
+  adapt_delta = 0.95
+)
+
+# Predict probabilities and determine state and overall winners
+clean_president_polls <- clean_president_polls |> 
+  mutate(
+    predicted_prob_harris = posterior_predict(bayesian_model, newdata = clean_president_polls, type = "response") |> colMeans(),
+    winner_harris = ifelse(predicted_prob_harris > 0.5, 1, 0)
+  )
+
+# Calculate and print overall predicted percentages
+overall_predicted_prob_harris <- mean(clean_president_polls$predicted_prob_harris)
+cat("Overall Percentage for Kamala Harris:", overall_predicted_prob_harris * 100, "%\n")
+cat("Overall Percentage for Donald Trump:", (1 - overall_predicted_prob_harris) * 100, "%\n")
+
+# State-level predictions and state winner counts
+state_predictions <- clean_president_polls %>%
+  group_by(state) %>%
+  summarize(
+    avg_predicted_prob_harris = mean(predicted_prob_harris),
+    state_winner = ifelse(avg_predicted_prob_harris > 0.5, "Harris", "Trump")
+  )
+
+overall_winner_summary <- count(state_predictions, state_winner)
+
+# Print state-level predictions and overall winner summary
+print(state_predictions, n = Inf)
+print(overall_winner_summary)
+
+### Model Validation/Checking ###
+set.seed(123)
+# Train/test split
+train_indices <- sample(seq_len(nrow(clean_president_polls)), size = 0.7 * nrow(clean_president_polls))
+training_data <- clean_president_polls[train_indices, ] %>% mutate(pct_scaled = scale(pct))
+testing_data <- clean_president_polls[-train_indices, ] %>% filter(pollster %in% unique(training_data$pollster))
+
+# Fit Bayesian model with training data
+model_validation_train <- stan_glmer(
+  is_harris ~ pct + (1 | pollster) + (1 | state),
+  data = training_data,
+  family = binomial(link = "logit"),
+  prior = normal(0.5, 0.1, autoscale = TRUE),
+  prior_intercept = normal(0.5, 0.1, autoscale = TRUE),
+  weights = weight,
+  cores = 4,
+  adapt_delta = 0.99,
+  seed = 123
+)
+
+# Posterior predictive check
+pp_check(model_validation_train)
+
+# Make predictions on the test set for the Bayesian model
+testing_data <- testing_data |> 
+  mutate(
+    predicted_prob_harris = posterior_predict(model_validation_train, newdata = testing_data, type = "response") |> colMeans(),
+    winner_harris = ifelse(predicted_prob_harris > 0.5, 1, 0)
+  )
+
+# Calculate accuracy for Bayesian model
+accuracy_b <- mean(testing_data$is_harris == testing_data$winner_harris)
+cat("Bayesian Model - Accuracy:", accuracy_b, "\n")
+
+# Fit Logistic Regression model
+model_logistic_train <- glm(
+  is_harris ~ pollster + state + pct,
+  data = training_data,
+  family = binomial(link = "logit"),
+  weights = weight
+)
+
+check_collinearity(model_logistic_train)
+
+# Make predictions on the test set for the logistic model
+testing_data <- testing_data |> 
+  mutate(
+    predicted_prob_harris = predict(model_logistic_train, newdata = testing_data, type = "response"),
+    winner_harris = ifelse(predicted_prob_harris > 0.5, 1, 0)
+  )
+
+# Calculate accuracy for Logistic model
+accuracy_l <- mean(testing_data$is_harris == testing_data$winner_harris)
+cat("Logistic Model - Accuracy:", accuracy_l, "\n")
+
+#### Save Model ####
+saveRDS(bayesian_model, file = "models/first_model.rds")
