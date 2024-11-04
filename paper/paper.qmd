@@ -210,10 +210,11 @@ state_predictions <- clean_president_polls %>%
 
 ### Predicted Probability of Harris Winning by State
 
-To visualize the variability in predicted probabilities by state, the following plot shows the average predicted probability of Kamala Harris winning in each state:
+To visualize the variability in predicted probabilities by state, the following plot(@fig-state) shows the average predicted probability of Kamala Harris winning in each state:
 
 ```{r}
 #| echo: false
+#| label: fig-state
 # Plot predicted probability of Harris winning by state
 state_predictions %>%
   ggplot(aes(x = reorder(state, avg_predicted_prob_harris), y = avg_predicted_prob_harris, fill = state_winner)) +
@@ -226,21 +227,6 @@ state_predictions %>%
   theme_minimal() +
   theme(axis.text.y = element_text(size = rel(0.6)))
 
-```
-
-```{r}
-#| echo: false
-# Plot predicted probability of Harris winning by state
-state_predictions %>%
-  ggplot(aes(x = reorder(state, avg_predicted_prob_harris), y = avg_predicted_prob_harris, fill = state_winner)) +
-  geom_bar(stat = "identity") +
-  coord_flip() +
-  labs(title = "Predicted Probability of Harris Winning by State",
-       x = "State",
-       y = "Average Predicted Probability",
-       fill = "Predicted Winner") +
-  theme_minimal() +
-  theme(axis.text.y = element_text(size = rel(0.6)))
 ```
 
 ### Distribution of Predicted Win Probabilities
@@ -260,6 +246,7 @@ clean_president_polls <- clean_president_polls %>%
 
 ```{r}
 #| echo: false
+#| label: fig-win_prob_harris
 # Plot distribution of predicted win probabilities for Harris
 clean_president_polls %>%
   ggplot(aes(x = predicted_prob_harris)) +
