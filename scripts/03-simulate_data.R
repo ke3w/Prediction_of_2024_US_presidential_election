@@ -7,7 +7,14 @@
 
 #### Workspace setup ####
 library(tidyverse)
-set.seed(853) # Set seed for reproducibility
+set.seed(853)
+
+#### Parameters ####
+n_samples <- 1000
+vote_min <- 30
+vote_max <- 70
+sample_size_min <- 500
+sample_size_max <- 5000
 
 #### Simulate data ####
 # State names
@@ -22,15 +29,15 @@ states <- c("Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado"
             "Tennessee", "Texas", "Utah", "Vermont", "Virginia", 
             "Washington", "West Virginia", "Wisconsin", "Wyoming")
 
-# Political parties
+# Parties
 parties <- c("Democratic", "Republican")
 
-# Simulate poll scores, sample sizes, and vote percentages
-poll_scores <- rnorm(1000, mean = 0, sd = 1) # Simulate 1000 poll scores with a normal distribution
-sample_sizes <- sample(500:5000, 1000, replace = TRUE) # Simulate sample sizes between 500 and 5000
-states_sampled <- sample(states, 1000, replace = TRUE) # Randomly sample states
-parties_sampled <- sample(parties, 1000, replace = TRUE, prob = c(0.5, 0.5)) # Equal probability for both parties
-vote_percentages <- round(runif(1000, 30, 70), 2) # Simulate vote percentages between 30% and 70%
+# Generate sample data
+poll_scores <- rnorm(n_samples, mean = 0, sd = 1) # Simulate poll scores with a normal distribution
+sample_sizes <- sample(sample_size_min:sample_size_max, n_samples, replace = TRUE) # Simulate sample sizes
+states_sampled <- sample(states, n_samples, replace = TRUE) # Randomly sample states
+parties_sampled <- sample(parties, n_samples, replace = TRUE, prob = c(0.5, 0.5)) # Equal probability for both parties
+vote_percentages <- round(runif(n_samples, vote_min, vote_max), 2) # Simulate vote percentages
 
 # Create a data frame
 simulated_election_data <- tibble(
@@ -42,7 +49,6 @@ simulated_election_data <- tibble(
 )
 
 #### Save data ####
-write_csv(simulated_election_data, "data/simulated_data/us_election_simulated_data.csv")
+write_csv(simulated_election_data, "data/02-analysis_data/simulated_data.csv")
+head(simulated_election_data)
 
-#### Display the simulated data ####
-print(simulated_election_data)
