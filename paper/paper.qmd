@@ -66,6 +66,25 @@ The predictor variables in this analysis were chosen based on their potential in
 These three variables provide a balanced view of poll quality, reliability, and regional influence, enhancing the model's ability to predict election outcomes accurately. This combination ensures that the model is interpretable and captures essential factors influencing voter sentiment. We apply Bayesian Information Criterion (BIC) method to select significant predictors, and a summary statistics for this method shown in @Appendix
 
 # Model
+```{r}
+# Load libraries and data
+library(tidyverse)
+library(ggplot2)
+library(rstanarm)
+library(arrow)
+
+clean_president_polls <- read_parquet("../data/02-analysis_data/cleaned_president_polls.parquet")
+
+clean_president_polls <- clean_president_polls %>%
+  mutate(
+    weight = numeric_grade * (sample_size / mean(sample_size)),
+    pollster = as.factor(pollster),
+    state = as.factor(state),
+    candidate_label = ifelse(is_harris == 1, "Harris", "Trump")
+  )
+
+```
+
 
 ## Description of the Model
 
@@ -82,6 +101,38 @@ where:
 -   "state" represents the U.S. state where the polling data was collected, also modeled as a random effect to capture variability between states.
 
 The model captures both the fixed effect of poll percentage () and the random effects attributable to differences between pollsters and states.
+```{r}
+# Fit Bayesian model
+bayesian_model <- stan_glmer(
+  is_harris ~ pct + (1 | pollster) + (1 | state),
+  data = clean_president_polls,
+  family = binomial(link = "logit"),
+  prior = normal(0.5, 0.1, autoscale = TRUE),
+  prior_intercept = normal(0.5, 0.1, autoscale = TRUE),
+  weights = weight,
+  cores = 4,
+  adapt_delta = 0.95,
+  refresh = 0
+)
+
+# Predict probabilities
+clean_president_polls <- clean_president_polls %>%
+  mutate(
+    predicted_prob_harris = posterior_predict(bayesian_model, newdata = clean_president_polls, type = "response") %>% colMeans(),
+    winner_harris = ifelse(predicted_prob_harris > 0.5, 1, 0)
+  )
+
+# Plot distribution of predicted win probabilities for Harris
+clean_president_polls %>%
+  ggplot(aes(x = predicted_prob_harris)) +
+  geom_histogram(binwidth = 0.05, fill = "blue", color = "black", alpha = 0.7) +
+  labs(title = "Distribution of Predicted Win Probabilities for Kamala Harris",
+       x = "Predicted Win Probability",
+       y = "Count") +
+  theme_minimal()
+
+```
+
 
 ## Model Assumptions
 
@@ -134,10 +185,44 @@ To evaluate model performance, accuracy was calculated for both the Bayesian mod
 These accuracy scores provide a simple measure of how well the models perform on the test set, demonstrating the Bayesian model's effectiveness in accounting for additional variability from pollster and state differences.
 
 ## Visualization of Results
+```{r}
+# Predict probabilities
+clean_president_polls <- clean_president_polls %>%
+  mutate(
+    predicted_prob_harris = posterior_predict(bayesian_model, newdata = clean_president_polls, type = "response") %>% colMeans(),
+    winner_harris = ifelse(predicted_prob_harris > 0.5, 1, 0)
+  )
+
+# Calculate average predicted probability for Harris by state
+state_predictions <- clean_president_polls %>%
+  group_by(state) %>%
+  summarize(
+    avg_predicted_prob_harris = mean(predicted_prob_harris),
+    state_winner = ifelse(avg_predicted_prob_harris > 0.5, "Harris", "Trump")
+  )
+
+```
+
 
 ### Predicted Probability of Harris Winning by State
 
 To visualize the variability in predicted probabilities by state, the following plot shows the average predicted probability of Kamala Harris winning in each state:
+```{r}
+#| echo: false
+# Plot predicted probability of Harris winning by state
+state_predictions %>%
+  ggplot(aes(x = reorder(state, avg_predicted_prob_harris), y = avg_predicted_prob_harris, fill = state_winner)) +
+  geom_bar(stat = "identity") +
+  coord_flip() +
+  labs(title = "Predicted Probability of Harris Winning by State",
+       x = "State",
+       y = "Average Predicted Probability",
+       fill = "Predicted Winner") +
+  theme_minimal() +
+  theme(axis.text.y = element_text(size = rel(0.6)))
+
+```
+
 
 ```{r}
 #| echo: false
@@ -157,6 +242,16 @@ state_predictions %>%
 ### Distribution of Predicted Win Probabilities
 
 The following histogram shows the distribution of predicted win probabilities across all polls for Kamala Harris:
+```{r}
+# Predict probabilities and determine winners
+clean_president_polls <- clean_president_polls %>%
+  mutate(
+    predicted_prob_harris = posterior_predict(bayesian_model, newdata = clean_president_polls, type = "response") %>% colMeans(),
+    winner_harris = ifelse(predicted_prob_harris > 0.5, 1, 0)
+  )
+
+```
+
 
 ```{r}
 #| echo: false
