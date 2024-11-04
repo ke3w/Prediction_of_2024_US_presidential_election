@@ -66,7 +66,10 @@ The predictor variables in this analysis were chosen based on their potential in
 These three variables provide a balanced view of poll quality, reliability, and regional influence, enhancing the model's ability to predict election outcomes accurately. This combination ensures that the model is interpretable and captures essential factors influencing voter sentiment. We apply Bayesian Information Criterion (BIC) method to select significant predictors, and a summary statistics for this method shown in @Appendix
 
 # Model
+
 ```{r}
+#| echo: false
+#| include: false
 # Load libraries and data
 library(tidyverse)
 library(ggplot2)
@@ -85,7 +88,6 @@ clean_president_polls <- clean_president_polls %>%
 
 ```
 
-
 ## Description of the Model
 
 The model used for this analysis is a Bayesian generalized linear mixed model (GLMM) with a logistic regression link function. This model was designed to predict the probability of Kamala Harris winning an election based on polling data. Several key predictors are incorporated into the model, including the poll percentage, polling organization, and state-level variability. The specific formula used in the model is:
@@ -101,7 +103,9 @@ where:
 -   "state" represents the U.S. state where the polling data was collected, also modeled as a random effect to capture variability between states.
 
 The model captures both the fixed effect of poll percentage () and the random effects attributable to differences between pollsters and states.
+
 ```{r}
+#| echo: false
 # Fit Bayesian model
 bayesian_model <- stan_glmer(
   is_harris ~ pct + (1 | pollster) + (1 | state),
@@ -132,7 +136,6 @@ clean_president_polls %>%
   theme_minimal()
 
 ```
-
 
 ## Model Assumptions
 
@@ -185,7 +188,9 @@ To evaluate model performance, accuracy was calculated for both the Bayesian mod
 These accuracy scores provide a simple measure of how well the models perform on the test set, demonstrating the Bayesian model's effectiveness in accounting for additional variability from pollster and state differences.
 
 ## Visualization of Results
+
 ```{r}
+#| echo: false
 # Predict probabilities
 clean_president_polls <- clean_president_polls %>%
   mutate(
@@ -203,10 +208,10 @@ state_predictions <- clean_president_polls %>%
 
 ```
 
-
 ### Predicted Probability of Harris Winning by State
 
 To visualize the variability in predicted probabilities by state, the following plot shows the average predicted probability of Kamala Harris winning in each state:
+
 ```{r}
 #| echo: false
 # Plot predicted probability of Harris winning by state
@@ -222,7 +227,6 @@ state_predictions %>%
   theme(axis.text.y = element_text(size = rel(0.6)))
 
 ```
-
 
 ```{r}
 #| echo: false
@@ -242,7 +246,9 @@ state_predictions %>%
 ### Distribution of Predicted Win Probabilities
 
 The following histogram shows the distribution of predicted win probabilities across all polls for Kamala Harris:
+
 ```{r}
+#| echo: false
 # Predict probabilities and determine winners
 clean_president_polls <- clean_president_polls %>%
   mutate(
@@ -251,7 +257,6 @@ clean_president_polls <- clean_president_polls %>%
   )
 
 ```
-
 
 ```{r}
 #| echo: false
@@ -265,24 +270,169 @@ clean_president_polls %>%
   theme_minimal()
 ```
 
-### Accuracy Comparison Between Models
+These visualizations provide a comprehensive overview of the model's predictive power across different states and help illustrate the distribution of predicted probabilities for Kamala Harris. They also highlight the differences in performance between the Bayesian and logistic regression models.
 
-The following boxplot compares the predicted win probabilities for both the Bayesian and logistic regression models, highlighting their effectiveness:
+#result
 
 ```{r}
+#| label: tbl-1
 #| echo: false
-# Plot comparison of predicted win probabilities between Bayesian and Logistic models
-testing_data %>%
-  gather(key = "Model", value = "Predicted_Probability", predicted_prob_harris) %>%
-  ggplot(aes(x = Model, y = Predicted_Probability, fill = Model)) +
-  geom_boxplot() +
-  labs(title = "Comparison of Predicted Win Probabilities Between Models",
-       x = "Model",
-       y = "Predicted Win Probability") +
+#| warning: false
+#| message: false
+#| tbl-cap: "Average support, Standard deviation, and the Range of polling support values for each candidate"
+# Filter data for Donald Trump and Kamala Harris and calculate summary statistics
+detailed_stats <- data %>%
+  filter(candidate_name %in% c("Donald Trump", "Kamala Harris")) %>%
+  group_by(candidate_name) %>%
+  summarise(
+    avg_support_pct = mean(pct, na.rm = TRUE),
+    std_dev_support = sd(pct, na.rm = TRUE),
+    min_support = min(pct, na.rm = TRUE),
+    max_support = max(pct, na.rm = TRUE),
+    num_polls = n()
+  )
+
+knitr::kable(detailed_stats)
+
+
+```
+The national average support percentages, along with other summary statistics for Donald Trump and Kamala Harris, are summarized in @tbl-1. This table presents average support, standard deviation, and the range of polling support values for each candidate, providing insights into the predicted national favorability for both candidates.
+
+Summary of Key Findings:
+
+- **Average Support**: Kamala Harris has a slight lead over Donald Trump, with an average predicted national support of 47.39% compared to Trump’s 45.65%. This narrow margin points to a competitive race, with neither candidate establishing a decisive lead across the polls.
+
+- **Variability in Support**: The standard deviation values indicate greater variability in Trump’s support (5.33%) compared to Harris’s (4.38%). This suggests that Trump’s polling performance fluctuates more widely, which could be due to varying levels of regional support or shifts in public opinion over time.
+
+- **Support Range**: Both candidates display a considerable range in support across polls, with Trump’s polling support varying between 21.0% and 70.0%, and Harris’s between 25.0% and 70.0%. This variability highlights the diversity in voter sentiment, potentially influenced by geographic, demographic, or temporal factors.
+
+- **Poll Count**: The higher number of polls for Trump (2,487) compared to Harris (1,253) suggests more extensive polling coverage for Trump, which may lend more stability to his average support estimate.
+
+These summary statistics indicate a close national race, with Harris holding a slight edge in average support. Trump’s higher standard deviation and broader polling range highlight a more variable support base, suggesting potential swings in support across regions or voter groups. The consistency in Harris’s polling, coupled with her narrow lead, suggests steady favorability, but both candidates remain competitive nationally, underscoring the close nature of the race.
+
+```{r}
+#| warning: false
+#| message: false
+#| label: fig-figure1
+#| fig_caption: true
+#| fig-cap:"Average support difference by state between Kamala Harris and Donald Trump. Blue indicates stronger support for Harris, red for Trump, and white for nearly equal support."
+#| echo: false
+# Filter data for Harris and Trump, then calculate average support by state for each
+harris_data <- data %>%
+  filter(candidate_name == "Kamala Harris") %>%
+  group_by(state) %>%
+  summarise(harris_pct = mean(pct, na.rm = TRUE))
+
+trump_data <- data %>%
+  filter(candidate_name == "Donald Trump") %>%
+  group_by(state) %>%
+  summarise(trump_pct = mean(pct, na.rm = TRUE))
+
+# Join the two datasets by state
+comparison_data <- left_join(harris_data, trump_data, by = "state")
+
+# Calculate the support difference (Harris - Trump)
+comparison_data <- comparison_data %>%
+  mutate(support_diff = harris_pct - trump_pct)
+
+# Ensure state names are lowercase to match with map data
+comparison_data$state <- tolower(comparison_data$state)
+
+# Load US map data
+states_map <- map_data("state")
+
+# Join map data with support difference data
+map_data <- states_map %>%
+  left_join(comparison_data, by = c("region" = "state"))
+
+# Plot the map showing support difference
+ggplot(map_data, aes(long, lat, group = group, fill = support_diff)) +
+  geom_polygon(color = "white") +
+  scale_fill_gradient2(low = "red", mid = "white", high = "blue", midpoint = 0, 
+                       name = "Support Difference\n(Harris - Trump)") +
+  theme_minimal() +
+  theme(legend.position = "right")
+```
+@fig-figure1 visualizes the difference in average polling support between Kamala Harris and Donald Trump across U.S. states. The map uses a color gradient to convey where each candidate has more support, with shades of blue indicating higher support for Harris, red indicating higher support for Trump, and white representing near-equal support levels. This visual provides a geographic perspective on the polling landscape, highlighting regional strongholds, competitive states, and areas of significant support advantage for each candidate.
+
+
+
+```{r}
+#| warning: false
+#| message: false
+#| label: fig-figure2
+#| fig_caption: true
+#| fig-cap:"Battleground States with Narrow Polling Margins"
+#| echo: false
+
+
+# Calculate the average polling margin between the top two candidates in each state
+important_states <- data %>%
+  filter(party_binary == 1) %>%
+  group_by(state, candidate_name) %>%
+  summarize(avg_pct = mean(pct, na.rm = TRUE)) %>%
+  arrange(state, desc(avg_pct)) %>%
+  group_by(state) %>%
+  mutate(margin = avg_pct - lead(avg_pct, default = 0)) %>%
+  slice(1) %>%
+  filter(margin < 5) # Select states with a polling margin under 5%
+
+# Plotting the battleground states with narrow polling margins
+ggplot(important_states, aes(x = reorder(state, margin), y = margin)) +
+  geom_bar(stat = "identity", fill = "red") +
+  coord_flip() +
   theme_minimal()
 ```
+@fig-figure2 visualizes the polling margins between the top two candidates in various states. Each bar represents a state, with the length of the bar corresponding to the polling margin—the difference in polling percentage between the leading candidate and the runner-up. States are ordered by margin, from the narrowest at the bottom (indicating the closest contest) to the widest margin at the top. For instance, states like Arizona, Minnesota, and Michigan show extremely close polling margins, meaning that support for the top two candidates is nearly evenly split. These states are critical battlegrounds where even a small shift in voter preference could change the outcome. For example, Arizona has the smallest margin, making it a highly competitive state. Otherwise, states like Washington, California, and South Dakota have wider margins, suggesting a more clear lead for one candidate. While they are still classified as battlegrounds due to the selected margin threshold, they are less competitive than states at the bottom.
 
-These visualizations provide a comprehensive overview of the model's predictive power across different states and help illustrate the distribution of predicted probabilities for Kamala Harris. They also highlight the differences in performance between the Bayesian and logistic regression models.
+
+
+```{r}
+#| label: tbl-2
+#| echo: false
+#| warning: false
+#| message: false
+#| tbl-cap: "Predicted support percentages for Kamala Harris and Donald Trump in key competitive states, showing the anticipated winner and the percentage margin of support in each state."
+
+# Load the dataset
+state_support_data <- read.csv("/Users/apple/Desktop/cleaned_president_polls.csv")
+
+# Define the list of states you are interested in
+selected_states <- c("Pennsylvania", "Michigan", "Wisconsin", "Arizona", "Georgia", "North Carolina", "Nevada")
+
+# Filter data for the selected states
+filtered_data <- state_support_data %>%
+  filter(state %in% selected_states, candidate_name %in% c("Kamala Harris", "Donald Trump"))
+
+# Calculate average support for Kamala Harris in each state
+kamala_support <- filtered_data %>%
+  filter(candidate_name == "Kamala Harris") %>%
+  group_by(state) %>%
+  summarize(`Kamala Support (%)` = mean(pct, na.rm = TRUE))
+
+# Calculate average support for Donald Trump in each state
+trump_support <- filtered_data %>%
+  filter(candidate_name == "Donald Trump") %>%
+  group_by(state) %>%
+  summarize(`Trump Support (%)` = mean(pct, na.rm = TRUE))
+
+# Merge the two support tables by state
+merged_support <- left_join(kamala_support, trump_support, by = "state")
+
+# Calculate Predicted Winner and Support Margin
+final_table <- merged_support %>%
+  mutate(
+    `Predicted Winner` = ifelse(`Kamala Support (%)` > `Trump Support (%)`, "Kamala Harris", "Donald Trump"),
+    `Support Margin (%)` = abs(`Kamala Support (%)` - `Trump Support (%)`)
+  ) %>%
+  rename(State = state)
+
+# Display the final table using kable
+knitr::kable(final_table)
+
+```
+In @fig-figure2, We have figured out the key states that relatively important to the solutions of election. @tbl-2 presents the support percentages for Kamala Harris and Donald Trump across seven states, alongside a prediction of the winner based on the higher support percentage, and the margin of support difference between the two candidates. The table reveals that in several states (Arizona, Georgia, Nevada, North Carolina, and Pennsylvania), the margin between Kamala Harris and Donald Trump is extremely narrow (all under 2%). This tight margin indicates that these states are highly competitive, with neither candidate having a decisive lead. Such close races mean these states could easily swing in favor of either candidate depending on small shifts in public opinion or voter turnout. While Harris appears to have a slight edge in most of the states listed, the narrow margins mean that the race remains highly uncertain and dynamic.
+
 
 # Discussion
 
