@@ -35,41 +35,138 @@ data <- read_parquet("../data/02-analysis_data/cleaned_president_polls.parquet")
 
 # Introduction
 
-The outcome of the U.S. presidential election has far-reaching implications, shaping both domestic policies and international relations. As the 2024 election approaches, voters and analysts turn to polls to understand the state of the race between Vice President Kamala Harris, the Democratic candidate, and former President Donald Trump, the Republican candidate. However, individual polls are often limited by their methodologies, timing, and sample demographics, leading to variations in predictions. To overcome these limitations, aggregating multiple polls—a technique known as “poll-of-polls”—provides a more stable and reliable indicator of public opinion. This paper applies a poll-of-polls approach, informed by methodologies from individual polls[@blumenthal2014; @pasek2015], to predict the outcome of the 2024 U.S. presidential election, focusing on data aggregated by FiveThirtyEight[@fivethirtyeight2024].
+The outcome of the U.S. presidential election has far-reaching implications, shaping both domestic policies and international relations. As the 2024 election approaches, voters and analysts turn to polls to understand the state of the race between Vice President Kamala Harris, the Democratic candidate, and former President Donald Trump, the Republican candidate. However, individual polls are often limited by their methodologies, timing, and sample demographics, leading to variations in predictions. To overcome these limitations, aggregating multiple polls—a technique known as “poll-of-polls”—provides a more stable and reliable indicator of public opinion. This paper applies a poll-of-polls approach, informed by methodologies from individual polls [@blumenthal2014; @pasek2015], to predict the outcome of the 2024 U.S. presidential election, focusing on data aggregated by FiveThirtyEight [@fivethirtyeight2024].
 
-The primary objective of this analysis is to forecast which candidate is likely to win the 2024 election based on aggregated national and battleground state polling data. By constructing a generalized linear model, we aim to distill insights from the extensive polling data available, examining trends and key demographic indicators.
+The primary objective of this analysis is to forecast which candidate is likely to win the 2024 election based on aggregated national and battleground state polling data. By constructing a Bayesian generalized linear mixed model (GLMM), we aim to distill insights from the extensive polling data available, examining trends and key demographic indicators while accounting for inherent variability between pollsters and states.
 
-The primary estimand in this analysis is the probability of each candidate winning the 2024 U.S. presidential election based on aggregated polling data. This probability is derived from a weighted average of poll results across national and battleground states, with adjustments for factors such as recent polling trends, sample sizes, and state-specific electoral significance.
+The primary estimand in this analysis is the probability of each candidate winning the 2024 U.S. presidential election based on aggregated polling data. This probability is derived from a weighted average of poll results across national and battleground states, with adjustments for factors such as recent polling trends, sample sizes, pollster reliability, and state-specific electoral significance.
 
-Our analysis reveals a highly competitive race, with key battleground states playing a pivotal role in determining the overall outcome. The model identifies specific regions and demographics that are likely to influence the election results, highlighting the polarized nature of the electorate.As of November 1, 2024, FiveThirtyEight’s national polling average indicates a slight edge for Harris, who has 48.1% support compared to Trump’s 46.7%. Despite this narrow national lead, the race in critical battleground states remains highly competitive. For instance, Pennsylvania is evenly split, with Harris holding marginal leads in states like Wisconsin and Michigan, while Trump shows slight advantages in Nevada, Georgia, and Arizona. These tight margins highlight the crucial role battleground states play in determining the election’s outcome.
+Our analysis reveals a highly competitive race, with key battleground states playing a pivotal role in determining the overall outcome. The model identifies specific regions and demographics that are likely to influence the election results, highlighting the polarized nature of the electorate. As of November 1, 2024, FiveThirtyEight’s national polling average indicates a slight edge for Harris, who has 48.1% support compared to Trump’s 46.7%. Despite this narrow national lead, the race in critical battleground states remains highly competitive. For instance, Pennsylvania is evenly split, with Harris holding marginal leads in states like Wisconsin and Michigan, while Trump shows slight advantages in Nevada, Georgia, and Arizona. These tight margins highlight the crucial role battleground states play in determining the election’s outcome.
 
 These findings underscore the importance of aggregated poll data in capturing the broader political landscape, offering insights that single polls may miss. By understanding the dynamics at play, this study contributes to a broader understanding of electoral processes and the predictive power of statistical models in forecasting complex political events.
 
-This paper is organized as follows: @sec-data discusses the details of the dataset. @sec-Methodology describes the methodology, including generalized linear model. @sec-Results presents the results, highlighting trends in polling, and @sec-Discussion considers the implications of these results for future research on polling and public opinion.
+This paper is organized as follows: @sec-data discusses the details of the dataset. @sec-Methodology describes the Bayesian generalized linear mixed model used in the analysis. @sec-Results presents the results, highlighting trends in polling, and @sec-Discussion considers the implications of these results for future research on polling and public opinion.
 
 # Data {#sec-data}
 
 ## Overview
 
-We use the statistical programming language R [@citeR] to analyze polling data from FiveThirtyEight’s U.S. Presidential election polls [@FiveThirtyEight2024]. The dataset contains information such as pollster, polling date, methodology, sample size, state, and candidate support percentages. It allows us to track voter sentiment across different regions and polling methods, providing a comprehensive view of the election landscape. Additionally, irrelevant or incomplete entries were removed to ensure clean, high-quality data, and we retained only key variables to streamline the analysis. This careful selection and cleaning process ensure that the dataset offers a precise and representative snapshot of the election landscape.
+We use the statistical programming language R [@citeR] to analyze polling data from FiveThirtyEight’s U.S. Presidential election polls [@fivethirtyeight2024]. The dataset contains information such as pollster, polling date, methodology, sample size, state, and candidate support percentages. It allows us to track voter sentiment across different regions and polling methods, providing a comprehensive view of the election landscape. Additionally, irrelevant or incomplete entries were removed to ensure clean, high-quality data, and we retained only key variables to streamline the analysis. This careful selection and cleaning process ensure that the dataset offers a precise and representative snapshot of the election landscape.
 
 ## Measurement
 
 The dataset measures public opinion on the 2024 U.S. presidential election by aggregating polling data to estimate voter support for each candidate at both national and state levels. These polling data entries are then aggregated, which applies a weighted adjustment to reflect the reliability, sample size, and recency of each poll. This weighting process addresses the natural variation in polling methodologies (e.g., online survey, phone), sample diversity, and timing, which influence the reliability of each poll as a measure of the broader population’s preferences.For instance, if this poll was conducted a week before the election, it might be weighted more heavily than a poll from three months prior, as it better represents current voter sentiment. By weighting higher-quality and more recent polls more heavily, it creates a comprehensive measure that accounts for both regional and national voter sentiment, smoothing out biases from individual polls.
 
+```{r}
+#| label: tbl-weight
+#| echo: false
+#| warning: false
+#| message: false
+#| tbl-cap: "A sample of the Weighted Average Support by State and Candidate"
+#| 
+data <- read.csv("../data/02-analysis_data/cleaned_president_polls.csv")
+# Create a weighting factor based on sample size and recency
+data <- data %>%
+  mutate(
+    days_ago = as.numeric(difftime(Sys.Date(), as.Date(end_date), units = "days")),
+    time_weight = 1 / (1 + days_ago),  # More recent polls get higher weight
+    weight = sample_size * time_weight  # Combine sample size and recency for overall weight
+  )
+# Calculate weighted average polling percentage by state and candidate
+weighted_avg <- data %>%
+  group_by(state, candidate_name) %>%
+  summarize(weighted_avg_pct = sum(pct * weight, na.rm = TRUE) / sum(weight, na.rm = TRUE)) %>%
+  ungroup() %>%  # Ungroup to treat the data as a whole
+  arrange(state, desc(weighted_avg_pct))
+
+# Display a random sample of 10 rows from the entire weighted average table
+sample_weighted_avg <- weighted_avg %>% sample_n(10)
+knitr::kable(sample_weighted_avg)
+```
+@tbl-weight  displays a sample of weighted average support for each candidate (Donald Trump and Kamala Harris) across various U.S. states, based on aggregated polling data from multiple sources. The values in the Weighted Average Polling Percentage column (weighted_avg_pct) are adjusted to account for the reliability, sample size, and recency of each poll, providing a more accurate reflection of current voter sentiment.
+
+The weighting process involves giving higher importance to polls with larger sample sizes and those conducted more recently, as they are likely to better represent the present-day preferences of the population. For instance, a poll conducted a week before the election might receive a higher weight than one conducted three months prior. Additionally, polls with larger sample sizes are considered more reliable and are thus weighted more heavily. This adjustment helps smooth out biases and variability introduced by different polling methodologies, such as online versus phone surveys, and regional sampling differences.
+
 ## Outcome variables
 
-In our analysis, the primary outcome variable is labeled `win`, which is a binary indicator representing the likelihood of a candidate "winning" in each poll based on their support percentage. Specifically, `win` is defined as follows: if a candidate's support percentage (`pct`) in a given poll exceeds 50%, then `win` is assigned a value of 1, indicating a projected win for that candidate in that poll. If the support percentage is 50% or below, `win` is assigned a value of 0, indicating that the candidate is not the likely winner in that poll. This binary outcome variable is particularly useful for logistic regression analysis, as it allows us to model the probability of a candidate achieving majority support in each poll. Using win provides a clear and interpretable framework to assess factors influencing a candidate’s chances of gaining majority support, which aligns well with election forecasting goals. Additionally, this threshold reflects the electoral concept of a "win," as it represents the point at which a candidate has more than half of the vote share, an essential consideration in political analysis.
+In our analysis, the primary outcome variable is labeled `is_harris`, which is a binary indicator representing whether Harris will win or not based on their support percentage. Specifically, `is_harris` is defined as follows: if a candidate's support percentage (`pct`) in a given poll exceeds 50%, then `is_harris` is assigned a value of 1, indicating a projected win for that candidate in that poll. If the support percentage is 50% or below, `is_harris` is assigned a value of 0, indicating that Harris is not the likely winner in that poll. This binary outcome variable is particularly useful for logistic regression analysis, as it allows us to model the probability of a candidate achieving majority support in each poll. Using win provides a clear and interpretable framework to assess factors influencing a candidate’s chances of gaining majority support, which aligns well with election forecasting goals. Additionally, this threshold reflects the electoral concept of a "win," as it represents the point at which a candidate has more than half of the vote share, an essential consideration in political analysis.
 
 ## Predictor variables
 
-The predictor variables in this analysis were chosen based on their potential influence on polling outcomes and candidate support. Each predictor reflects characteristics of the poll, the pollster, or the candidate's support environment. These variables aim to capture the factors that could impact the likelihood of a candidate reaching majority support (win = 1). Key predictor variables include:
+The predictor variables in this analysis were chosen based on their potential influence on polling outcomes and candidate support. Each predictor reflects characteristics of the poll, the pollster, or the candidate's support environment. These variables aim to capture the factors that could impact the likelihood of Harris will be reaching majority support (is_harris = 1). Key predictor variables include:
 
--   **sample_size**: Represents the number of respondents in each poll, with larger sample sizes generally leading to more reliable results.
--   **pollster Rating**: Indicates the quality and historical accuracy of the polling organization, helping to account for differences in poll reliability.
--   **state**: Captures the geographical region of the poll, reflecting regional differences in voter support that are crucial in U.S. elections.
+-   **Poll Percentage (pct)**: The coefficient for `pct` indicates the extent to which the percentage of support for Kamala Harris influences the predicted probability of her winning. A higher percentage is expected to increase the likelihood of winning.
 
-These three variables provide a balanced view of poll quality, reliability, and regional influence, enhancing the model's ability to predict election outcomes accurately. This combination ensures that the model is interpretable and captures essential factors influencing voter sentiment. We apply Bayesian Information Criterion (BIC) method to select significant predictors, and a summary statistics for this method shown in @Appendix
+-   **Pollster**: The model accounts for variability between pollsters, allowing the model to adjust for differences in reliability or bias across different organizations.
+
+-   **State**: The model also accounts for variability between states, which helps to capture regional differences in voter sentiment.
+
+These three variables provide a balanced view of poll quality, reliability, and regional influence, enhancing the model's ability to predict election outcomes accurately. This combination ensures that the model is interpretable and captures essential factors influencing voter sentiment. The variables are selected by their theoretical relevance and practical influence on polling outcomes, and a summary statistics for this  shown in @sec-Methodology.
+
+
+##Data visualization 
+### Heatmap of Polling Percentage by State for Selected Pollsters
+```{r}
+#| warning: false
+#| message: false
+#| label: fig-heatmap
+#| fig_caption: true
+#| fig-cap: "Heatmap of Polling Percentage by State for Selected Pollsters across various states"
+#| echo: false
+
+data <- read.csv("../data/02-analysis_data/cleaned_president_polls.csv")
+top_pollsters <- data %>%
+  count(pollster) %>%
+  top_n(5, n) %>%
+  pull(pollster)
+
+# Filter the dataset to only include the selected pollsters
+filtered_data <- data %>%
+  filter(pollster %in% top_pollsters) %>%
+  group_by(state, pollster) %>%
+  summarize(avg_pct = mean(pct, na.rm = TRUE))
+
+# Plot the heatmap for the selected pollsters
+ggplot(filtered_data, aes(x = state, y = pollster, fill = avg_pct)) +
+  geom_tile() +
+  scale_fill_gradient(low = "white", high = "blue") +
+  labs(
+       fill = "Average Polling %") +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5, margin = margin(t = 10)),
+    axis.text.y = element_text(margin = margin(r = 10)),
+    axis.title.x = element_text(margin = margin(t = 15)),
+    axis.title.y = element_text(margin = margin(r = 15))
+  )
+
+```
+@fig-heatmap This heatmap provides a visual representation of the average polling percentage for a particular candidate across various U.S. states, as reported by five selected polling organizations: YouGov, Siena/NYT, Redfield & Wilton Strategies, Morning Consult, and Emerson. Since the pollsters shown in the cleaned dataset are numerous, we select a few prominent pollsters based on certain criteria (such as pollster popularity or quality) and then use these pollsters to generate a cleaner, more focused heatmap.
+
+Each cell in the heatmap represents the level of support reported by a pollster in a specific state, with darker shades of blue indicating higher levels of support (closer to 49%) and lighter shades indicating lower support (around 45%). This color gradient allows us to quickly assess the intensity of support in each state as reported by different pollsters. We observe that some states, such as Florida and North Carolina, have darker shades across multiple pollsters, indicating consistently higher support levels. Conversely, states like New York and New Mexico show lighter shades, suggesting lower support. The variability in color intensity across different pollsters in certain states (e.g., Pennsylvania and Nevada) highlights differences in polling results, which could stem from differences in sampling methods, demographic coverage, or timing. This visualization helps identify trends in regional support and provides insight into how different polling organizations might report support levels differently, offering a comprehensive view of the polling landscape.
+
+
+###Average Polling Percentage Over time by Candidate
+```{r}
+#| warning: false
+#| message: false
+#| label: fig-line
+#| fig_caption: true
+#| fig-cap: "Average polling percentage over time for Donald Trump (red) and Kamala Harris (blue) from August to November. The lines show fluctuating support levels for each candidate, with frequent overlaps, indicating a competitive race. Peaks and dips in the polling percentages reflect changes in voter sentiment, potentially influenced by events throughout the campaign period."
+#| echo: false
+
+
+library(ggplot2)
+ggplot(data, aes(x = as.Date(end_date), y = pct, color = candidate_name, group = candidate_name)) +
+  geom_line(stat = "summary", fun = mean) +
+  labs(title = "Average Polling Percentage Over Time by Candidate",
+       x = "Date",
+       y = "Polling Percentage (%)",
+       color = "Candidate") +
+  theme_minimal()
+```
+@fig-line displays the average polling percentage over time for two candidates, Donald Trump (red line) and Kamala Harris (blue line). The x-axis represents the date, spanning from August to early November, while the y-axis represents the average polling percentage each candidate received in various polls over time. The chart shows significant fluctuations in support for both candidates, with frequent crossings and variations in their polling percentages. For instance, Harris’s polling percentage generally hovers around 50% but occasionally peaks above 55%, while Trump’s support also fluctuates widely, occasionally dipping below 40% and rising above 50%. These variations could reflect public reactions to events or developments in the election campaign. The close alignment and frequent overlap between the lines indicate a competitive race, with neither candidate maintaining a consistent lead over time. This visualization highlights the dynamic nature of voter support and how polling results can shift from week to week.
+
 
 # Model
 
@@ -106,7 +203,7 @@ $$ where:
 
 -   "pct" is the percentage of support that Harris received in the poll.
 
--   "pollster" represents the polling organization, modeled as a random effect to account for differences in reliability or bias between pollsters[@keyfitz1951sampling].
+-   "pollster" represents the polling organization, modeled as a random effect to account for differences in reliability or bias between pollsters.
 
 -   "state" represents the U.S. state where the polling data was collected, also modeled as a random effect to capture variability between states.
 
