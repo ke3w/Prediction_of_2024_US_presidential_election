@@ -89,71 +89,64 @@ formula(best_model)
 BIC(best_model)
 ```
 
-#model
+# Model
 
-# Model Analysis
+## Model Analysis
+In this study, we used a Generalized Linear Model (GLM) to forecast the winner of the upcoming US presidential election. The response variable was a binary outcome representing whether a candidate was predicted to win (1) or lose (0) in a given state. Given this binary nature of the response variable, we employed a logistic regression with a **logistic link function** to model the probability of a candidate winning a poll.
 
-In this study, we employed a Generalized Linear Model (GLM) to forecast the winner of the upcoming US presidential election. The model uses polling data to estimate the probability of each candidate winning a given state, enabling us to predict the overall election result. We used a logistic regression approach, where the outcome is a binary variable (1 if the candidate wins, 0 otherwise).
-
-## Model Set-Up
-
-The model takes the following form:
-
+The model used the following equation:
 $$
-P(y_i = 1) = \text{logit}^{-1}(\alpha + \beta_1 \cdot \text{pollscore}_i + \beta_2 \cdot \text{log\_sample\_size}_i + \gamma_{\text{state}_i} + \delta_{\text{pollster\_rating}_i})
+\log\left(\frac{p_i}{1 - p_i}\right) = \alpha + \beta_1 \cdot \text{pollscore}_i + \beta_2 \cdot \text{sample\_size}_i + \beta_3 \cdot \text{party\_binary}_i + \gamma_{\text{state}_i}
 $$
+Where:
 
-where (y_i) represents the probability of candidate (i) winning, ( \alpha ) is the intercept, and the coefficients (( \beta, \gamma, \delta )) represent the effects of predictors like poll score, sample size, state, and pollster rating.
+- \( p_i \) is the probability of a candidate winning a poll in state \(i\).
+- \( \alpha \) is the intercept term.
+- \( \beta_1, \beta_2, \beta_3 \) are the coefficients for the predictors (`pollscore`, `sample_size`, and `party_binary`), estimated from the model fitting process.
+- \( \gamma_{\text{state}_i} \) accounts for state-level effects, as voting preferences can vary significantly across states.
 
-The model was trained using polling data, aggregated from multiple sources (the poll-of-polls approach), which helped to minimize biases associated with individual polls. The logistic link function was employed to model the binary outcome of winning or losing in each state.
+The logistic link function transforms the model's output into the [0, 1] range, which is suitable for representing probabilities.
 
-## Election Probability Estimation and Winner Prediction
+The predictors we used in the model were:
 
-The GLM provides a probability estimate for each candidate in every state. We applied a threshold of 0.5 to classify a candidate as the winner for each state. By aggregating the predicted winners across all states, we determined the overall forecast for the election.
+1. **Poll Score (`pollscore`)**: This variable represents the quality of a poll. Higher scores imply a higher quality, which is expected to result in a more accurate representation of public sentiment.
+2. **Sample Size (`sample_size`)**: Larger sample sizes are generally associated with more reliable estimates, reducing the margin of error in poll predictions.
+3. **State (`state`)**: Voter preferences often vary significantly by state. Including state-level information allows us to account for regional voting patterns.
+4. **Party Affiliation (`party_binary`)**: This binary variable represents the candidate's party, with "Democratic" coded as 1 and "Republican" coded as 0.
 
-The model results suggest that Candidate A has a predicted win in several key battleground states, giving them an estimated advantage in the electoral college. Based on these state-level predictions, Candidate A is forecasted to win the upcoming US presidential election.
+## Multicollinearity Check
+To check for multicollinearity, we calculated the Variance Inflation Factor (VIF) values for each predictor. The VIF values were as follows:
 
-## Model Diagnostics
-
-We performed several diagnostic evaluations to ensure the reliability of our model:
-
--   **Residual Analysis**: Examined residual vs. fitted plots to assess any systematic patterns.
--   **Normal Q-Q Plot**: Used to verify that the residuals follow a normal distribution.
--   **Cook's Distance**: Identified potential influential observations that could have a disproportionate effect on the model.
-
-These diagnostics indicated that the model performed well, with no significant violations of assumptions that would undermine the predictions.
-
-## Model Results and Visualizations
-
-The model coefficients and summary statistics are presented in Table @tbl-modelresults. These results provide insights into how different factors—such as poll quality and sample size—affect the probability of winning.
-
-```{r}
-#| echo: false
-#| eval: true
-#| warning: false
-#| message: false
-
-library(rstanarm)
-
-# Load the election model
-election_model <- readRDS(file = here::here("models/election_model.rds"))
-```
-```{r}
-#| echo: false
-#| eval: true
-#| label: tbl-modelresults
-#| tbl-cap: "Model results for predicting the winner of the election"
-#| warning: false
-
-modelsummary::modelsummary(
-  list(
-    "Election Model" = election_model
-  ),
-  statistic = "mad",
-  fmt = 2
-)
+```plaintext
+                 GVIF Df GVIF^(1/(2*Df))
+pollscore    1.138990  1        1.067235
+sample_size  1.416363  1        1.190110
+state        1.622067 54        1.004489
+party_binary 1.006902  1        1.003445
 ```
 
+All VIF values are well below the commonly used threshold of 10, indicating that there is no serious multicollinearity issue among the predictors. This implies that the predictors are not highly correlated and the model coefficients are likely to be stable.
+
+## Model Fit and Diagnostics
+To evaluate the quality of the model fit, we performed several diagnostic tests and generated plots for visual assessment.
+
+### Residual Analysis
+
+ROC Curve
+We plotted the Receiver Operating Characteristic (ROC) Curve to evaluate the model's classification performance. The area under the curve (AUC) was found to be 0.82, indicating good model discrimination between winners and losers.
+```{r}
+#| label: fig-roc
+#| fig-cap: "ROC Curve for GLM Model"
+#| echo: false
+
+library(pROC)
+roc_curve <- roc(polls_data_cleaned$win, predict(glm_model, type = "response"))
+plot(roc_curve, main = "ROC Curve")
+```
+## Prediction and Result
+The GLM was used to estimate the probability of each candidate winning in each state. Candidates with predicted probabilities greater than 0.5 were classified as winners for that state.
+
+Based on the model, the predicted winner of the US presidential election is the candidate who has the majority of predicted state wins. From the polling data and the model results, Candidate A (e.g., Democratic) was predicted to win the election, securing the majority of states.
 
 # Discussion
 

@@ -8,8 +8,8 @@
 library(tidyverse)
 library(broom)
 library(knitr)
-library(car)  # For VIF calculation
-library(pROC)  # For ROC curve and AUC
+library(car)
+library(pROC)
 
 #### Read Data ####
 model_data <- read_csv("data/02-analysis_data/cleaned_president_polls.csv")
@@ -49,5 +49,5 @@ print(paste("AUC Value:", auc_value))
 #### Save Model ####
 saveRDS(
   glm_model,
-  file = "models/glm_model_log_transform.rds"
+  file = "models/glm_model.rds"
 )
