@@ -63,106 +63,88 @@ The predictor variables in this analysis were chosen based on their potential in
 
 These three variables provide a balanced view of poll quality, reliability, and regional influence, enhancing the model's ability to predict election outcomes accurately. This combination ensures that the model is interpretable and captures essential factors influencing voter sentiment. We apply Bayesian Information Criterion (BIC) method to select significant predictors, and a summary statistics for this method shown in @Appendix
 
-```{r}
-# Define the binary response variable if not already defined
-# Create a binary `win` variable where pct > 50% indicates a "win"
-data <- data %>%
-  mutate(win = ifelse(pct > 50, 1, 0))
-# Fit the full logistic regression model with all predictors
-full_model <- glm(
-  win ~ sample_size + pollscore + transparency_score + 
-          methodology + start_date + end_date + state + party, 
-  data = data, 
-  family = binomial
-)
-# Use stepwise selection based on BIC
-best_model <- stepAIC(
-  full_model, 
-  direction = "both", 
-  k = log(nrow(data)) # Set k to log(n) for BIC
-)
-
-# Display the summary of the selected model based on BIC
-summary(best_model)
-# View final model formula and BIC value
-formula(best_model)
-BIC(best_model)
-```
 
 # Model
 
-## Model Analysis
-In this study, we used a Generalized Linear Model (GLM) to forecast the winner of the upcoming US presidential election. The response variable was a binary outcome representing whether a candidate was predicted to win (1) or lose (0) in a given state. Given this binary nature of the response variable, we employed a logistic regression with a **logistic link function** to model the probability of a candidate winning a poll.
+# Description of the Model
 
-The model used the following equation:
+The model used for this analysis is a generalized linear model (GLM) with a logistic regression link function, designed to predict the probability of a candidate winning an election based on polling data. The model takes into consideration several key predictors that may influence the likelihood of a candidate winning, including poll score, sample size, candidate party, and poll percentage. Specifically, the formula used in the model is:
+
 $$
-\log\left(\frac{p_i}{1 - p_i}\right) = \alpha + \beta_1 \cdot \text{pollscore}_i + \beta_2 \cdot \text{sample\_size}_i + \beta_3 \cdot \text{party\_binary}_i + \gamma_{\text{state}_i}
+\text{logit}(P(Y = 1)) = \beta_0 + \beta_1 \cdot \text{pollscore} + \beta_2 \cdot \text{sample\_size} + \beta_3 \cdot \text{party\_binary} + \beta_4 \cdot \text{pct}
 $$
-Where:
 
-- \( p_i \) is the probability of a candidate winning a poll in state \(i\).
-- \( \alpha \) is the intercept term.
-- \( \beta_1, \beta_2, \beta_3 \) are the coefficients for the predictors (`pollscore`, `sample_size`, and `party_binary`), estimated from the model fitting process.
-- \( \gamma_{\text{state}_i} \) accounts for state-level effects, as voting preferences can vary significantly across states.
+where:
+ - Y = 1 represents the outcome that a candidate wins the poll.
+ - pollscore refers to the quality score assigned to the poll, reflecting its reliability.
+ - sample_size represents the number of respondents in the poll.
+ - party_binary is a binary indicator of the candidate's party (1 for Democratic, 0 for others).
+ - pct represents the percentage of support the candidate received in the poll.
 
-The logistic link function transforms the model's output into the [0, 1] range, which is suitable for representing probabilities.
-
-The predictors we used in the model were:
-
-1. **Poll Score (`pollscore`)**: This variable represents the quality of a poll. Higher scores imply a higher quality, which is expected to result in a more accurate representation of public sentiment.
-2. **Sample Size (`sample_size`)**: Larger sample sizes are generally associated with more reliable estimates, reducing the margin of error in poll predictions.
-3. **State (`state`)**: Voter preferences often vary significantly by state. Including state-level information allows us to account for regional voting patterns.
-4. **Party Affiliation (`party_binary`)**: This binary variable represents the candidate's party, with "Democratic" coded as 1 and "Republican" coded as 0.
-
-## Multicollinearity Check
-To check for multicollinearity, we calculated the Variance Inflation Factor (VIF) values for each predictor. The VIF values were as follows:
-
-```plaintext
-                 GVIF Df GVIF^(1/(2*Df))
-pollscore    1.138990  1        1.067235
-sample_size  1.416363  1        1.190110
-state        1.622067 54        1.004489
-party_binary 1.006902  1        1.003445
-```
-
-All VIF values are well below the commonly used threshold of 10, indicating that there is no serious multicollinearity issue among the predictors. This implies that the predictors are not highly correlated and the model coefficients are likely to be stable.
-
-## Model Fit and Diagnostics
-To evaluate the quality of the model fit, we performed several diagnostic tests and generated plots for visual assessment.
-
-### Residual Analysis
-
-ROC Curve
-We plotted the Receiver Operating Characteristic (ROC) Curve to evaluate the model's classification performance. The area under the curve (AUC) was found to be 0.82, indicating good model discrimination between winners and losers.
 ```{r}
-#| label: fig-roc
-#| fig-cap: "ROC Curve for GLM Model"
-#| echo: false
+# Load necessary libraries
+library(rstanarm)
+library(tidyverse)
 
-library(pROC)
-roc_curve <- roc(polls_data_cleaned$win, predict(glm_model, type = "response"))
-plot(roc_curve, main = "ROC Curve")
+# Load the cleaned data
+polls_data_cleaned <- read_csv("../data/02-analysis_data/cleaned_president_polls.csv")
+
+
+# Fit the logistic regression model
+win_model <- stan_glm(
+  formula = win ~ pollscore + sample_size + party_binary + pct,
+  data = polls_data_cleaned,
+  family = binomial(link = "logit"),
+  prior = normal(location = 0, scale = 2.5, autoscale = TRUE),
+  prior_intercept = normal(location = 0, scale = 2.5, autoscale = TRUE),
+  seed = 853
+)
+
+# Print summary of the model
+summary(win_model)
 ```
-## Prediction and Result
-The GLM was used to estimate the probability of each candidate winning in each state. Candidates with predicted probabilities greater than 0.5 were classified as winners for that state.
+## Model Performance and Interpretation
+The model's output includes estimates for each predictor, providing insights into their relative importance in predicting a candidate's probability of winning. The summary of the model reveals the following key points:
 
-Based on the model, the predicted winner of the US presidential election is the candidate who has the majority of predicted state wins. From the polling data and the model results, Candidate A (e.g., Democratic) was predicted to win the election, securing the majority of states.
+Poll Score (pollscore): The coefficient for pollscore indicates the extent to which the quality of a poll influences the predicted probability of a candidate winning. Higher-quality polls are expected to provide more reliable estimates, and therefore have a stronger effect on the predicted outcome.
+
+Sample Size (sample_size): The coefficient for sample_size shows the influence of the number of respondents on the model. Polls with larger sample sizes are generally more reliable, contributing positively to the accuracy of predictions.
+
+Party (party_binary): The party_binary variable highlights any potential advantage or disadvantage linked to party affiliation, with 1 representing Democratic candidates. This variable helps capture any systemic biases or influences based on party identification.
+
+Poll Percentage (pct): The pct variable is a key predictor as it directly measures the level of support a candidate receives. A higher percentage is expected to lead to a higher probability of winning.
+
+```{r}
+# Calculate predicted win probabilities
+polls_data_cleaned <- polls_data_cleaned %>%
+  mutate(predicted_win_prob = predict(win_model, type = "response"))
+
+# Display a few rows of data with predicted probabilities
+polls_data_cleaned %>%
+  dplyr::select(state, candidate_name, pct, predicted_win_prob) %>%
+  head()
+
+# Save the model and predictions for later use
+saveRDS(win_model, "../models/election_win_model.rds")
+write_csv(polls_data_cleaned, "../data/04-model_results/polls_with_predictions.csv")
+```
+The model described above allows us to predict the likelihood of each candidate winning based on the given polling data, using a logistic regression approach. The model was implemented using rstanarm to provide a Bayesian estimation, which helps incorporate uncertainty into our predictions.
+
+
+
 
 # Discussion
 
 ## First discussion point {#sec-first-point}
 
-If my paper were 10 pages, then should be be at least 2.5 pages. The discussion is a chance to show off what you know and what you learnt from all this.
 
 ## Second discussion point
 
-Please don't use these as sub-heading labels - change them to be what your point actually is.
 
 ## Third discussion point
 
 ## Weaknesses and next steps
 
-Weaknesses and next steps should also be included.
 
 \newpage
 
@@ -181,24 +163,7 @@ In @fig-ppcheckandposteriorvsprior-1 we implement a posterior predictive check. 
 In @fig-ppcheckandposteriorvsprior-2 we compare the posterior with the prior. This shows...
 
 ```{r}
-#| eval: true
-#| echo: false
-#| message: false
-#| warning: false
-#| label: fig-ppcheckandposteriorvsprior
-#| layout-ncol: 2
-#| fig-cap: "Examining how the model fits, and is affected by, the data"
-#| fig-subcap: ["Posterior prediction check", "Comparing the posterior with the prior"]
 
-pp_check(first_model) +
-  theme_classic() +
-  theme(legend.position = "bottom")
-
-posterior_vs_prior(first_model) +
-  theme_minimal() +
-  scale_color_brewer(palette = "Set1") +
-  theme(legend.position = "bottom") +
-  coord_flip()
 ```
 
 ## Diagnostics
@@ -208,18 +173,7 @@ posterior_vs_prior(first_model) +
 @fig-stanareyouokay-2 is a Rhat plot. It shows... This suggests...
 
 ```{r}
-#| echo: false
-#| eval: true
-#| message: false
-#| warning: false
-#| label: fig-stanareyouokay
-#| fig-cap: "Checking the convergence of the MCMC algorithm"
-#| fig-subcap: ["Trace plot", "Rhat plot"]
-#| layout-ncol: 2
 
-plot(first_model, "trace")
-
-plot(first_model, "rhat")
 ```
 
 \newpage
