@@ -23,6 +23,8 @@ library(tidyverse)
 library(ggplot2)
 library(MASS)
 library(dplyr)
+library(rstanarm)
+
 ```
 
 # Introduction
@@ -63,10 +65,9 @@ The predictor variables in this analysis were chosen based on their potential in
 
 These three variables provide a balanced view of poll quality, reliability, and regional influence, enhancing the model's ability to predict election outcomes accurately. This combination ensures that the model is interpretable and captures essential factors influencing voter sentiment. We apply Bayesian Information Criterion (BIC) method to select significant predictors, and a summary statistics for this method shown in @Appendix
 
-
 # Model
 
-# Description of the Model
+## Description of the Model
 
 The model used for this analysis is a generalized linear model (GLM) with a logistic regression link function, designed to predict the probability of a candidate winning an election based on polling data. The model takes into consideration several key predictors that may influence the likelihood of a candidate winning, including poll score, sample size, candidate party, and poll percentage. Specifically, the formula used in the model is:
 
@@ -74,36 +75,40 @@ $$
 \text{logit}(P(Y = 1)) = \beta_0 + \beta_1 \cdot \text{pollscore} + \beta_2 \cdot \text{sample\_size} + \beta_3 \cdot \text{party\_binary} + \beta_4 \cdot \text{pct}
 $$
 
-where:
- - Y = 1 represents the outcome that a candidate wins the poll.
- - pollscore refers to the quality score assigned to the poll, reflecting its reliability.
- - sample_size represents the number of respondents in the poll.
- - party_binary is a binary indicator of the candidate's party (1 for Democratic, 0 for others).
- - pct represents the percentage of support the candidate received in the poll.
+where: - Y = 1 represents the outcome that a candidate wins the poll. - pollscore refers to the quality score assigned to the poll, reflecting its reliability. - sample_size represents the number of respondents in the poll. - party_binary is a binary indicator of the candidate's party (1 for Democratic, 0 for others). - pct represents the percentage of support the candidate received in the poll.
 
 ```{r}
+#| echo: false
 # Load necessary libraries
 library(rstanarm)
 library(tidyverse)
 
 # Load the cleaned data
 polls_data_cleaned <- read_csv("../data/02-analysis_data/cleaned_president_polls.csv")
-
-
 # Fit the logistic regression model
+options(mc.cores = parallel::detectCores(), rstanarm.verbosity = 0)
+
 win_model <- stan_glm(
   formula = win ~ pollscore + sample_size + party_binary + pct,
   data = polls_data_cleaned,
   family = binomial(link = "logit"),
   prior = normal(location = 0, scale = 2.5, autoscale = TRUE),
   prior_intercept = normal(location = 0, scale = 2.5, autoscale = TRUE),
-  seed = 853
+  seed = 853,
+  refresh = 0  # Suppress progress output during sampling
 )
-
-# Print summary of the model
-summary(win_model)
 ```
+
+```{r}
+#| echo: false
+# Extract summary of the model without sampling details
+summary_text <- capture.output(print(summary(win_model)))
+cat(summary_text, sep = "\n")
+
+```
+
 ## Model Performance and Interpretation
+
 The model's output includes estimates for each predictor, providing insights into their relative importance in predicting a candidate's probability of winning. The summary of the model reveals the following key points:
 
 Poll Score (pollscore): The coefficient for pollscore indicates the extent to which the quality of a poll influences the predicted probability of a candidate winning. Higher-quality polls are expected to provide more reliable estimates, and therefore have a stronger effect on the predicted outcome.
@@ -115,6 +120,8 @@ Party (party_binary): The party_binary variable highlights any potential advanta
 Poll Percentage (pct): The pct variable is a key predictor as it directly measures the level of support a candidate receives. A higher percentage is expected to lead to a higher probability of winning.
 
 ```{r}
+#| echo: false
+
 # Calculate predicted win probabilities
 polls_data_cleaned <- polls_data_cleaned %>%
   mutate(predicted_win_prob = predict(win_model, type = "response"))
@@ -128,23 +135,55 @@ polls_data_cleaned %>%
 saveRDS(win_model, "../models/election_win_model.rds")
 write_csv(polls_data_cleaned, "../data/04-model_results/polls_with_predictions.csv")
 ```
+
 The model described above allows us to predict the likelihood of each candidate winning based on the given polling data, using a logistic regression approach. The model was implemented using rstanarm to provide a Bayesian estimation, which helps incorporate uncertainty into our predictions.
 
+```{r}
+#| echo: false
+# Plot relationship between poll percentage and predicted win probability
+polls_data_cleaned %>%
+  ggplot(aes(x = pct, y = predicted_win_prob)) +
+  geom_point(alpha = 0.6) +
+  geom_smooth(method = "loess", se = FALSE, color = "red") +
+  labs(title = "Relationship Between Poll Percentage and Predicted Win Probability",
+       x = "Poll Percentage",
+       y = "Predicted Win Probability") +
+  theme_minimal()
+```
 
+```{r}
+#| echo: false
+# Plot predicted win probabilities by party
+polls_data_cleaned %>%
+  ggplot(aes(x = party_binary, y = predicted_win_prob, fill = factor(party_binary))) +
+  geom_boxplot() +
+  scale_fill_manual(values = c("0" = "red", "1" = "blue"), labels = c("0" = "Republican", "1" = "Democratic")) +
+  labs(title = "Predicted Win Probabilities by Party",
+       x = "Party",
+       y = "Predicted Win Probability") +
+  theme_minimal()
+```
 
+```{r}
+#| echo: false
+# Plot predicted win probability distribution
+ggplot(polls_data_cleaned, aes(x = predicted_win_prob)) +
+  geom_histogram(binwidth = 0.05, fill = "steelblue", color = "black") +
+  labs(title = "Distribution of Predicted Win Probabilities",
+       x = "Predicted Win Probability",
+       y = "Count") +
+  theme_minimal()
+```
 
 # Discussion
 
 ## First discussion point {#sec-first-point}
 
-
 ## Second discussion point
-
 
 ## Third discussion point
 
 ## Weaknesses and next steps
-
 
 \newpage
 
