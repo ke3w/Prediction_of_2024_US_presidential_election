@@ -75,3 +75,4 @@ message("Number of rows after removing duplicates: ", nrow(clean_president_polls
 
 #### Save data ####
 write_parquet(clean_president_polls, "data/02-analysis_data/cleaned_president_polls.parquet")
+write_csv(clean_president_polls, "data/02-analysis_data/cleaned_president_polls.csv")
