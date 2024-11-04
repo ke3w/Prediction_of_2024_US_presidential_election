@@ -1,25 +1,23 @@
 #### Preamble ####
 # Purpose: Models... [...UPDATE THIS...]
-# Author: Rohan Alexander [...UPDATE THIS...]
-# Date: 11 February 2023 [...UPDATE THIS...]
-# Contact: rohan.alexander@utoronto.ca [...UPDATE THIS...]
+# Author: Xinze Wu
+# Date: 2 November 2024
+# Contact: kerwin.wu@utoronto.ca
 # License: MIT
-# Pre-requisites: [...UPDATE THIS...]
-# Any other information needed? [...UPDATE THIS...]
-
 
 #### Workspace setup ####
 library(tidyverse)
+# The broom library is used for converting the model output into a tidy data frame
 library(broom)
+# Load the knitr library for better visualization of some tables
 library(knitr)
 
 #### Read data ####
-election_data <- read_csv("data/02-analysis_data/cleaned_president_polls.csv")
+polls_data_cleaned <- read_csv("data/02-analysis_data/cleaned_president_polls.csv")
 
-#### GLM Model ####
-# Fit the GLM model using the selected significant predictors
-glm_model <- glm(pct ~ pollscore + log_sample_size + state,
-                 data = analysis_data, family = gaussian())
+### Model data ####
+# Fit the GLM model using logistic regression
+glm_model <- glm(win ~ pollscore + sample_size + state + party_binary, family = binomial, data = polls_data_cleaned)
 
 # Tidy the model output using broom's tidy() function
 glm_tidy <- tidy(glm_model)
@@ -32,11 +30,9 @@ glm_significant <- glm_tidy %>%
 glm_significant %>%
   kable(caption = "Statistically Significant Variables from the GLM Model")
 
+
 #### Save model ####
 saveRDS(
   glm_model,
   file = "models/glm_model.rds"
 )
-
-
-
