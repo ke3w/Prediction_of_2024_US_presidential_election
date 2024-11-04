@@ -98,9 +98,11 @@ clean_president_polls <- clean_president_polls %>%
 
 The model used for this analysis is a Bayesian generalized linear mixed model (GLMM) with a logistic regression link function. This model was designed to predict the probability of Kamala Harris winning an election based on polling data. Several key predictors are incorporated into the model, including the poll percentage, polling organization, and state-level variability. The specific formula used in the model is:
 
-where:
+$$
+\text{logit}(\mu_i) = \beta_0 + \beta_1 \times \text{Pollster}_i + \beta_2 \times \text{State}_i + \beta_3 \times \text{Sample Size}_i + \beta_4 \times \text{Pct}_i
+$$ where:
 
--   represents the outcome that Kamala Harris wins the poll.
+-   $\mu_i$ represents the outcome that Kamala Harris wins the poll.
 
 -   "pct" is the percentage of support that Harris received in the poll.
 
