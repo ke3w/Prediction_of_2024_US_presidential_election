@@ -25,6 +25,7 @@ library(MASS)
 library(dplyr)
 library(rstanarm)
 library(maps)
+data <- read_parquet("../data/02-analysis_data/cleaned_president_polls.parquet")
 ```
 
 # Introduction
@@ -269,7 +270,7 @@ These visualizations provide a comprehensive overview of the model's predictive 
 #| tbl-cap: "Average support, Standard deviation, and the Range of polling support values for each candidate"
 # Filter data for Donald Trump and Kamala Harris and calculate summary statistics
 detailed_stats <- data %>%
-  filter(candidate_name %in% c("Donald Trump", "Kamala Harris")) %>%
+  dplyr::filter(candidate_name %in% c("Donald Trump", "Kamala Harris")) %>%
   group_by(candidate_name) %>%
   summarise(
     avg_support_pct = mean(pct, na.rm = TRUE),
@@ -351,7 +352,7 @@ ggplot(map_data, aes(long, lat, group = group, fill = support_diff)) +
 #| echo: false
 
 
-data <- read_csv("cleaned_president_polls.csv")
+data <- read_csv("../data/02-analysis_data/cleaned_president_polls.csv")
 important_states <- data %>%
   group_by(state, candidate_name) %>%
   summarize(avg_pct = mean(pct, na.rm = TRUE)) %>%
@@ -380,7 +381,7 @@ ggplot(important_states, aes(x = reorder(state, margin), y = margin)) +
 #| tbl-cap: "Predicted support percentages for Kamala Harris and Donald Trump in key competitive states, showing the anticipated winner and the percentage margin of support in each state."
 
 # Load the dataset
-state_support_data <- read_parquet("/Users/apple/Desktop/cleaned_president_polls.parquet")
+state_support_data <- read_parquet("../data/02-analysis_data/cleaned_president_polls.parquet")
 
 # Define the list of states you are interested in
 selected_states <- c("Pennsylvania", "Michigan", "Wisconsin", "Arizona", "Georgia", "North Carolina", "Nevada")
