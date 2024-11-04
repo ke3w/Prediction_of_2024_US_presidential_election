@@ -1,6 +1,7 @@
 ---
-title: "Forecasting the 2024 U.S. Presidential Election: A Poll-of-Polls Approach for Predicting the Outcome"
-subtitle: "Applying Aggregated Poll Data and Statistical Model to Reveal a Narrow Path to Victory in a Highly Competitive Race"
+title: "Predicting a Harris Victory: A Bayesian Analysis of Polling Data and Voter Sentiment in the 2024 U.S. Presidential Election"
+
+subtitle: "Utilizing state-level polling data and probabilistic modeling to uncover regional support patterns and forecast electoral outcomes in a competitive race"
 author: 
   - Chendong Fei
   - Xinze Wu
@@ -83,7 +84,8 @@ weighted_avg <- data %>%
 sample_weighted_avg <- weighted_avg %>% sample_n(10)
 knitr::kable(sample_weighted_avg)
 ```
-@tbl-weight  displays a sample of weighted average support for each candidate (Donald Trump and Kamala Harris) across various U.S. states, based on aggregated polling data from multiple sources. The values in the Weighted Average Polling Percentage column (weighted_avg_pct) are adjusted to account for the reliability, sample size, and recency of each poll, providing a more accurate reflection of current voter sentiment.
+
+@tbl-weight displays a sample of weighted average support for each candidate (Donald Trump and Kamala Harris) across various U.S. states, based on aggregated polling data from multiple sources. The values in the Weighted Average Polling Percentage column (weighted_avg_pct) are adjusted to account for the reliability, sample size, and recency of each poll, providing a more accurate reflection of current voter sentiment.
 
 The weighting process involves giving higher importance to polls with larger sample sizes and those conducted more recently, as they are likely to better represent the present-day preferences of the population. For instance, a poll conducted a week before the election might receive a higher weight than one conducted three months prior. Additionally, polls with larger sample sizes are considered more reliable and are thus weighted more heavily. This adjustment helps smooth out biases and variability introduced by different polling methodologies, such as online versus phone surveys, and regional sampling differences.
 
@@ -101,11 +103,12 @@ The predictor variables in this analysis were chosen based on their potential in
 
 -   **State**: The model also accounts for variability between states, which helps to capture regional differences in voter sentiment.
 
-These three variables provide a balanced view of poll quality, reliability, and regional influence, enhancing the model's ability to predict election outcomes accurately. This combination ensures that the model is interpretable and captures essential factors influencing voter sentiment. The variables are selected by their theoretical relevance and practical influence on polling outcomes, and a summary statistics for this  shown in @sec-Methodology.
+These three variables provide a balanced view of poll quality, reliability, and regional influence, enhancing the model's ability to predict election outcomes accurately. This combination ensures that the model is interpretable and captures essential factors influencing voter sentiment. The variables are selected by their theoretical relevance and practical influence on polling outcomes, and a summary statistics for this shown in @sec-Methodology.
 
-## Data visualization 
+## Data visualization
 
 ### Heatmap of Polling Percentage by State for Selected Pollsters
+
 ```{r}
 #| warning: false
 #| message: false
@@ -141,12 +144,13 @@ ggplot(filtered_data, aes(x = state, y = pollster, fill = avg_pct)) +
   )
 
 ```
+
 @fig-heatmap This heatmap provides a visual representation of the average polling percentage for a particular candidate across various U.S. states, as reported by five selected polling organizations: YouGov, Siena/NYT, Redfield & Wilton Strategies, Morning Consult, and Emerson. Since the pollsters shown in the cleaned dataset are numerous, we select a few prominent pollsters based on certain criteria (such as pollster popularity or quality) and then use these pollsters to generate a cleaner, more focused heatmap.
 
 Each cell in the heatmap represents the level of support reported by a pollster in a specific state, with darker shades of blue indicating higher levels of support (closer to 49%) and lighter shades indicating lower support (around 45%). This color gradient allows us to quickly assess the intensity of support in each state as reported by different pollsters. We observe that some states, such as Florida and North Carolina, have darker shades across multiple pollsters, indicating consistently higher support levels. Conversely, states like New York and New Mexico show lighter shades, suggesting lower support. The variability in color intensity across different pollsters in certain states (e.g., Pennsylvania and Nevada) highlights differences in polling results, which could stem from differences in sampling methods, demographic coverage, or timing. This visualization helps identify trends in regional support and provides insight into how different polling organizations might report support levels differently, offering a comprehensive view of the polling landscape.
 
-
 ###Average Polling Percentage Over time by Candidate
+
 ```{r}
 #| warning: false
 #| message: false
@@ -165,8 +169,8 @@ ggplot(data, aes(x = as.Date(end_date), y = pct, color = candidate_name, group =
        color = "Candidate") +
   theme_minimal()
 ```
-@fig-line displays the average polling percentage over time for two candidates, Donald Trump (red line) and Kamala Harris (blue line). The x-axis represents the date, spanning from August to early November, while the y-axis represents the average polling percentage each candidate received in various polls over time. The chart shows significant fluctuations in support for both candidates, with frequent crossings and variations in their polling percentages. For instance, Harris’s polling percentage generally hovers around 50% but occasionally peaks above 55%, while Trump’s support also fluctuates widely, occasionally dipping below 40% and rising above 50%. These variations could reflect public reactions to events or developments in the election campaign. The close alignment and frequent overlap between the lines indicate a competitive race, with neither candidate maintaining a consistent lead over time. This visualization highlights the dynamic nature of voter support and how polling results can shift from week to week.
 
+@fig-line displays the average polling percentage over time for two candidates, Donald Trump (red line) and Kamala Harris (blue line). The x-axis represents the date, spanning from August to early November, while the y-axis represents the average polling percentage each candidate received in various polls over time. The chart shows significant fluctuations in support for both candidates, with frequent crossings and variations in their polling percentages. For instance, Harris’s polling percentage generally hovers around 50% but occasionally peaks above 55%, while Trump’s support also fluctuates widely, occasionally dipping below 40% and rising above 50%. These variations could reflect public reactions to events or developments in the election campaign. The close alignment and frequent overlap between the lines indicate a competitive race, with neither candidate maintaining a consistent lead over time. This visualization highlights the dynamic nature of voter support and how polling results can shift from week to week.
 
 # Model
 
@@ -532,11 +536,43 @@ In @fig-figure2, We have figured out the key states that relatively important to
 
 ## First discussion point {#sec-first-point}
 
-## Second discussion point
+**Discussion**
 
-## Third discussion point
+Recent coverage of the U.S. presidential election has sparked intense debate, with multiple news sources reporting a potential advantage for Harris [@Langer_2024]. To explore this and forecast the election outcome, we developed a Bayesian logistic regression model to predict Kamala Harris’s probability of winning based on polling data.
+
+Variables were chosen based on their relevance and practical influence on polling outcomes and forecasting, supported by scholarly literature. Polling percentage (pct) was selected as the primary predictor, as it directly reflects levels of support for Harris. We included random effects for pollster and state to account for variability introduced by differences in polling methodologies and regional demographics. These variables address known biases in polling data, allowing us to capture variability among pollsters and across states.
+
+The model applied weights based on poll grade and sample size to improve accuracy, operating on the principle that higher-quality polls and those with larger sample sizes should have greater influence as they are likely to provide more reliable data. Our model used prior assumptions centered around a moderate probability of success and leveraged the Bayesian framework for robust inference, adjusting for poll weights. Through this model, we generated posterior predictions for Harris's probability of winning, summarized by the mean probabilities, and used a histogram (see @fig-win_prob_harris) to visualize the distribution of these predicted win probabilities. Additionally, average predicted probabilities for Harris by state were calculated to assess her projected performance regionally (see @fig-state).
+
+The results reveal a competitive electoral landscape, with Harris holding a slight overall lead. As shown in @tbl-1, Harris holds a slight average lead in support percentage (47.39%) over Trump (45.65%). However, Trump’s support shows greater variability, with a standard deviation of 5.33 compared to Harris’s 4.38. This higher variability suggests that Trump’s polling numbers fluctuate more across different polls, potentially reflecting regional differences in voter sentiment.
+
+Additionally, while both candidates have similar maximum support levels, Trump’s minimum support dips lower than Harris’s, possibly indicating weaker performance in certain areas. This variation supports our use of a Bayesian approach, which is well-suited for accommodating the inherent uncertainty and fluctuations in polling data. While the slight overall lead and variability in support gives a primary prediction, a closer geographic analysis reveals that state-specific factors and narrow support margins further mirror reality and help forecast election results. Geographic analysis and polling data variability underscore the strategic importance of focusing on states with narrow support margins, where small shifts could decisively impact the election outcome.
+
+Silver [@silver2012signal] emphasizes that a candidate’s chances are heavily influenced by state-specific factors, suggesting that national polling averages may be misleading without geographic context. @fig-figure1, which shows the geographic distribution of support across the United States visualized through a color-coded map, reveals substantial differences in backing for Harris and Trump across states. Blue shades indicate stronger support for Harris, red shades show Trump’s advantage, and white indicates balanced support. The intensity of colors reflects the magnitude of support margins.
+
+@fig-figure1 identifies strongholds for both candidates, highlighting "swing" or competitive states as well as regions where each candidate’s support is concentrated. Harris’s support is primarily centered in the western and northeastern states, as indicated by the blue shades, with the darkest blues in states like California and Washington. In contrast, Trump’s support is concentrated in the central states, shown by the red shades, with deeper reds in states such as Wyoming and Idaho. This geographic pattern potentially reflects longstanding regional political alignments, with traditionally Democratic support in coastal and urbanized states and Republican support in rural and central areas.
+
+Our analysis further identifies several key battleground states (see @tbl-2), including Michigan, Nevada, North Carolina, Pennsylvania, and Wisconsin, where Harris leads by narrow margins. In contrast, Arizona and Georgia show a slight lead for Trump. These narrow differences underscore the highly competitive nature of the race in these states, where even small shifts in voter sentiment or turnout could change the outcome. This highlights the strategic importance of targeting battleground regions where small gains could translate into an electoral advantage for Harris. The data demonstrates the value of probabilistic modeling, as deterministic approaches might overlook the volatility in closely contested states.
+
+Comparing these battleground state findings with past studies, such as the work by Abramowitz [@abramowitz2008forecasting], we see consistency in the emphasis on swing states as critical to determining overall election outcomes. This research, however, relied on national economic indicators and did not account for local polling data in swing states. Our approach extends this work by using state-level polling data, which provides a more granular view of voter sentiment and reveals the nuances of support in each battleground state. These findings serve as a useful tool for candidates to refine their targeted strategies to influence regions where voter sentiment remains closely divided.
+
+@fig-figure2 provides additional insight into areas where Harris holds a strong advantage. States like Washington and California are strongholds for Harris, largely due to their urbanized, progressive populations and diverse demographics that historically lean Democratic [@gimpel2009patchwork]. On the other hand, states like South Dakota, Nebraska, and Kansas, while traditionally Republican, show unexpectedly larger margins of support for Harris in the current polling data. This may indicate issue-specific support or shifting regional sentiment on certain topics, such as healthcare access and economic policies. Rural and suburban voters in these states may be influenced by local concerns that align with the Democratic agenda, highlighting how even traditionally conservative areas can exhibit pockets of Democratic support, especially when local issues resonate with Harris’s platform. This trend demonstrates the importance of using real-time polling data, as it captures current voter sentiments that may differ from historical voting patterns [@gimpel2009patchwork].
+
+Conversely, battleground states like Pennsylvania, Wisconsin, Michigan, Minnesota, and Arizona show narrower support margins, indicating a highly competitive environment. These states are demographically and economically diverse, containing both urban and rural populations with mixed political preferences. This balance leads to overall closely divided voter bases in these states. Additionally, the economic structure in Midwestern states like Michigan, Wisconsin, and Pennsylvania, traditionally tied to manufacturing, makes them sensitive to issues like job creation and trade. Economic shifts and the decline of manufacturing have led to variable support for both parties based on their economic policies [@abramowitz2008forecasting]. These findings reveal key factors influencing support, including historical voting patterns, issue-driven shifts, and demographic and economic concerns.
+
+Our Bayesian logistic regression model provides a robust approach to forecasting election outcomes by addressing key sources of variability and uncertainty in polling data. By incorporating state-level polling data and applying weights based on poll quality and sample size, our model prioritizes higher-quality data, producing more reliable and accurate predictions. Additionally, the inclusion of random effects for both pollster and state allows us to capture variability in polling methodologies and regional demographics, which often introduce bias into traditional polling results. This model accounts for fluctuating voter sentiment across different regions, as demonstrated by Trump’s higher standard deviation in support, which reflects regional variations in his base. By explicitly modeling these variations, our Bayesian approach enables a more nuanced understanding of how both candidates perform across states and provides probabilistic predictions that reflect the inherent uncertainty of voter behavior. Unlike deterministic models, which might oversimplify this variability, our Bayesian framework offers a dynamic, real-time assessment that adapts to evolving trends in voter sentiment.
 
 ## Weaknesses and next steps
+
+Despite its strengths, our model has several limitations that could affect the accuracy of our predictions. First of all, the variable selection is oversimplified. The model primarily uses polling percentage (pct) as the predictor, with random effects for pollster and state to capture support and variability. While effective for a basic analysis, this approach may miss other influential factors. We should use AIC or BIC [@Akaike_1974; @Schwarz_1978] to assess model fit and potentially include additional predictors in the dataset, which could provide a more comprehensive understanding of voter sentiment. Additionally, we could consider incorporating other datasets to capture important factors such as demographic, economic, and media effects. By incorporating these criteria, we could identify a model that balances complexity and predictive accuracy, helps capture the nuances of voter behavior across different regions, and enhances the robustness of our predictions.
+
+Second, the model simplifies predictions into a binary outcome (Harris vs. Trump) by classifying probabilities over 0.5 as a "win" for Harris, which might oversimplify closely contested areas and lead to misleading classifications in competitive regions.
+
+Third, although weights for poll quality and sample size are applied, our reliance on polling data remains susceptible to sampling biases, such as non-response bias, which can lead to underrepresentation of certain demographic groups [@Groves_2006]. Additionally, pollsters’ methods and demographic focus can introduce further unaccounted-for biases [@Blumenthal_2014].
+
+Finally, since polling data represents only a snapshot, the model may fail to capture rapid shifts in voter sentiment due to late-breaking events or changing campaign dynamics, making predictions potentially less accurate as the election approaches.
+
+To enhance election forecasting accuracy, future research could expand beyond polling data by incorporating contextual factors such as economic indicators, demographic shifts, and media influence. These additional variables, like unemployment rates and region-specific issues, would provide a more comprehensive view of factors shaping voter preferences [@Erikson_2004]. Improving model adaptability is also essential. Integrating time-series analysis or adaptive Bayesian updates would allow the model to adjust to real-time changes in voter sentiment due to events and campaign dynamics, ensuring more accurate predictions as the election nears. Furthermore, refining classification methods to move beyond binary outcomes could yield more nuanced insights, especially in battleground states. Multi-class or probability-based categorizations would help capture the strength of support in competitive regions. Finally, addressing polling biases through advanced post-stratification techniques and demographic weighting would improve representativeness. Examining variations in pollster methods could further mitigate biases, making predictions more reliable. These advancements would collectively deepen our understanding of voter behavior and enhance the robustness of forecasting models.
 
 \newpage
 
@@ -546,75 +582,73 @@ In @fig-figure2, We have figured out the key states that relatively important to
 
 **Appendix A: Ipsos Polling Methodology**
 
-\
-
 **A.1 Population, Frame, and Sample**
 
 **A1.1 Population**
 
-Ipsos segments the target population into All Adults (A), Likely Voters (LV), and Registered Voters (RV) groups {RyanBest_2024}. The "All Adults" category represents the general adult population, offering broad insight into public sentiment. The "Likely Voters" group includes individuals estimated to vote based on past voting behavior or intention, providing a closer view of probable election outcomes. The "Registered Voters" segment covers those registered to vote, capturing eligible voters' opinions, even if they may not vote. Estimating "Likely Voters" involves assumptions based on behavioral factors that may not always align with actual turnout. As people’s intentions don’t always translate into action, thus may result in over-representation issue.
+Ipsos segments the target population into All Adults (A), Likely Voters (LV), and Registered Voters (RV) groups [@RyanBest_2024]. The "All Adults" category represents the general adult population, offering broad insight into public sentiment. The "Likely Voters" group includes individuals estimated to vote based on past voting behavior or intention, providing a closer view of probable election outcomes. The "Registered Voters" segment covers those registered to vote, capturing eligible voters' opinions, even if they may not vote. Estimating "Likely Voters" involves assumptions based on behavioral factors that may not always align with actual turnout, as people’s intentions don’t always translate into action, potentially resulting in over-representation issues.
 
-**A1.2 Frame**
+A1.2 Frame
 
-The sampling frame used by Ipsos is the KnowledgePanel, a probability-based online panel {ABCNews_2024a}. Members of this panel are recruited via address-based sampling, which randomly selecting addresses from the US Postal Service’s Delivery Sequence File to create a probability-based panel {ABCNews_2024a}. This method ensures that each household in the sampling frame has a known and non-zero probability of being selected, providing comprehensive geographic coverage across the US and minimizes selection bias {ABCNews_2024a}. Additionally, Ipsos bridge the digital divide by providing internet access and tablets to panelists who otherwise lack connectivity, enabling participation from households that may not have regular internet access {ABCNews_2024a}. This approach reduces biases associated with digital access and enhances the inclusivity of the sample. However, the reliance on an online panel may still present some limitations, as it might partially exclude populations who may face challenges with technology, particularly older adults.
+The sampling frame used by Ipsos is the KnowledgePanel, a probability-based online panel [@ABCNews_2024a]. Members of this panel are recruited via address-based sampling, which randomly selects addresses from the US Postal Service’s Delivery Sequence File to create a probability-based panel [@ABCNews_2024a]. This method ensures that each household in the sampling frame has a known and non-zero probability of being selected, providing comprehensive geographic coverage across the US and minimizing selection bias [@ABCNews_2024a]. Additionally, Ipsos bridges the digital divide by providing internet access and tablets to panelists who otherwise lack connectivity, enabling participation from households that may not have regular internet access [@ABCNews_2024a]. This approach reduces biases associated with digital access and enhances the inclusivity of the sample. However, the reliance on an online panel may still present some limitations, as it might partially exclude populations who may face challenges with technology, particularly older adults.
 
-**A1.3 Sample**
+A1.3 Sample
 
-Once members are part of the KnowledgePanel, Ipsos selects survey participants based on demographic quotas including sex, age, race/ethnicity, and region, and applies post-stratification weights to align with benchmarks from the Current Population Survey and American Community Survey {ABCNews_2024a}. Political engagement weighting includes factors like 2020 voting participation, improving representativeness for political polling. These weights are incorporated through a probability-proportional-to-size selection process, which assigns higher selection probabilities to underrepresented groups within the panel {ABCNews_2024a}. This approach helps ensure the sample reflects the diverse US population and improves its representativeness in polling results. While this isn't simple random sampling at this stage, the initial framework and recruitment, weighted selection process ensure that the panel and samples are broadly representative.
+Once members are part of the KnowledgePanel, Ipsos selects survey participants based on demographic quotas, including sex, age, race/ethnicity, and region, and applies post-stratification weights to align with benchmarks from the Current Population Survey and American Community Survey [@ABCNews_2024a]. Political engagement weighting includes factors like 2020 voting participation, improving representativeness for political polling. These weights are incorporated through a probability-proportional-to-size selection process, which assigns higher selection probabilities to underrepresented groups within the panel [@ABCNews_2024a]. This approach helps ensure the sample reflects the diverse US population and improves its representativeness in polling results. While this isn't simple random sampling at this stage, the initial framework and recruitment, along with the weighted selection process, ensure that the panel and samples are broadly representative.
 
-**A.2 Sample Recruitment**
+A.2 Sample Recruitment
 
-Ipsos recruits members for its KnowledgePanel using address-based sampling, sourced from the US Postal Service’s Delivery Sequence File {\@ABCNews_2024a}. This probability-based method allows each household to be randomly selected, increasing the panel’s representativeness across geographic and demographic groups {\@ABCNews_2024a}. To improve accessibility, Ipsos provides tablets and internet connections at no cost to those without internet access, helping to include lower-income or otherwise underserved populations and reducing the digital divide {\@ABCNews_2024a}. Despite these efforts, the approach has some limitations. While address-based sampling reaches a wide range of households, certain groups—like older adults with limited digital literacy—may still be less likely to participate, potentially impacting sample diversity. Also such sample recruitment approach can be expensive considering address-based sampling and inclusion measures. Nonetheless, Ipsos’ recruitment methods, combined with inclusivity measures, provide a strong foundation for building a representative panel. 
+Ipsos recruits members for its KnowledgePanel using address-based sampling, sourced from the US Postal Service’s Delivery Sequence File [@ABCNews_2024a]. This probability-based method allows each household to be randomly selected, increasing the panel’s representativeness across geographic and demographic groups [@ABCNews_2024a]. To improve accessibility, Ipsos provides tablets and internet connections at no cost to those without internet access, helping to include lower-income or otherwise underserved populations and reducing the digital divide [@ABCNews_2024a]. Despite these efforts, the approach has some limitations. While address-based sampling reaches a wide range of households, certain groups—like older adults with limited digital literacy—may still be less likely to participate, potentially impacting sample diversity. Such a sampling recruitment approach can also be expensive considering the costs of address-based sampling and inclusion measures. Nonetheless, Ipsos’ recruitment methods, combined with inclusivity measures, provide a strong foundation for building a representative panel.
 
-**A.3 Sampling Approach and Trade-offs**
+A.3 Sampling Approach and Trade-offs
 
-**A.3.1 Strengths**
+A.3.1 Strengths
 
-Address-based sampling creates a representative sample across regions and demographics, ensuring that each household has a known, non-zero chance of selection. Unlike non-probability approach, such probability-based approach helps achieve a representative sample of the US population across various regions and demographics, improves inclusion of hard-to-reach populations and reduce selection bias {\@callegaro2014online}. Further probability-proportional-to-size approach balances the sample by ensuring adequate representation of underrepresented groups {\@keyfitz1951sampling}.
+Address-based sampling creates a representative sample across regions and demographics, ensuring that each household has a known, non-zero chance of selection. Unlike non-probability approaches, such probability-based approaches help achieve a representative sample of the US population across various regions and demographics, improve inclusion of hard-to-reach populations, and reduce selection bias [@callegaro2014online]. Further, the probability-proportional-to-size approach balances the sample by ensuring adequate representation of underrepresented groups [@keyfitz1951sampling].
 
-2\. Ipsos’ use of demographic quotas and post-stratification weights aligns samples with the broader population {\@ABCNews_2024a}.
+2.  Ipsos’ use of demographic quotas and post-stratification weights aligns samples with the broader population [@ABCNews_2024a].
 
-3\. Multilingual surveys and internet access provision enhance inclusivity {\@ABCNews_2024a}.
+3.  Multilingual surveys and internet access provision enhance inclusivity [@ABCNews_2024a].
 
-4\. Ipsos incorporates multiple likely voter models, incorporating factors like voter registration, intention to vote, and past voting behavior to adjust pre-election polling relevance, increases accuracy {\@ABCNews_2024a}.
+4.  Ipsos incorporates multiple likely voter models, incorporating factors like voter registration, intention to vote, and past voting behavior to adjust pre-election polling relevance, increasing accuracy [@ABCNews_2024a].
 
-5.Ipsos includes design effects in the margin of error, enhancing poll reliability transparency {\@ABCNEWS/IPSOS}.
+5.  Ipsos includes design effects in the margin of error, enhancing poll reliability transparency [@ABCNEWS_IPSOS].
 
-**A.3.2 Limitations**
+A.3.2 Limitations
 
-1\. As \@panzeri2008sampling revels, using a sampling frame does not guarantee the elimination of sampling bias, if the target population is incorrectly defined or based on outdated or incomplete information, certain segments of the population may be excluded. Ipsos aligns its sample with demographic benchmarks from sources like the Current Population Survey and the American Community Survey {\@ABCNews_2024a}. Outdated benchmarks or 2020 voting data may not reflect current behaviors.
+1.  As [@panzeri2008sampling] reveals, using a sampling frame does not guarantee the elimination of sampling bias. If the target population is incorrectly defined or based on outdated or incomplete information, certain segments of the population may be excluded. Ipsos aligns its sample with demographic benchmarks from sources like the Current Population Survey and the American Community Survey [@ABCNews_2024a]. Outdated benchmarks or 2020 voting data may not reflect current behaviors.
 
-2\. Members of the KnowledgePanel must opt-in to join and remain in the panel, which can lead to self-selection bias. Individuals who agree to participate in ongoing surveys might differ in unmeasured ways from those who do not, potentially skewing the results.
+2.  Members of the KnowledgePanel must opt-in to join and remain in the panel, which can lead to self-selection bias. Individuals who agree to participate in ongoing surveys might differ in unmeasured ways from those who do not, potentially skewing the results.
 
-3\. Weighting for political engagement based on past elections assumes stable voter behavior, which may not account for shifting demographics or emerging issues {\@ABCNews_2024a}.
+3.  Weighting for political engagement based on past elections assumes stable voter behavior, which may not account for shifting demographics or emerging issues [@ABCNews_2024a].
 
-4\. Although Ipsos provides internet access and tablets to those without connectivity, some individuals may still lack the digital literacy needed to engage fully with online surveys. Older adults and those with lower levels of education or comfort with technology may participate differently, leading to potential response biases within these groups.
+4.  Although Ipsos provides internet access and tablets to those without connectivity, some individuals may still lack the digital literacy needed to engage fully with online surveys. Older adults and those with lower levels of education or comfort with technology may participate differently, leading to potential response biases within these groups.
 
-5\. Probability-based panels involve higher costs and resources due to recruitment and maintenance, particularly with inclusive measures {\@callegaro2014online}.
+5.  Probability-based panels involve higher costs and resources due to recruitment and maintenance, particularly with inclusive measures [@callegaro2014online].
 
-**A.4 Non-response Handling**
+A.4 Non-response Handling
 
-Ipsos sends initial reminders to panelists who do not respond to survey invitations, with a second reminder for harder-to-reach participants, allowing multiple opportunities to increase response rates {\@ABCNews_2024a}. In post-stratification, Ipsos applies weighting adjustments to mitigate nonresponse bias {\@ABCNews_2024a}. Additionally, Ipsos enforces strict quality control by removing respondents who show low engagement, such as those who skip many questions or complete surveys at unusually fast speeds to improve the reliability of the survey results {\@ABCNews_2024a}.
+Ipsos sends initial reminders to panelists who do not respond to survey invitations, with a second reminder for harder-to-reach participants, allowing multiple opportunities to increase response rates [@ABCNews_2024a]. In post-stratification, Ipsos applies weighting adjustments to mitigate nonresponse bias [@ABCNews_2024a]. Additionally, Ipsos enforces strict quality control by removing respondents who show low engagement, such as those who skip many questions or complete surveys at unusually fast speeds to improve the reliability of the survey results [@ABCNews_2024a].
 
-**A.5 Questionnaire Design**
+A.5 Questionnaire Design
 
-**A.5.1 Strengths**
+A.5.1 Strengths
 
-1\. Ipsos uses standardized and pre-tested questions to ensure consistency and clarity. This approach helps maintain reliability and accuracy by identifying and addressing potential issues in question design before full deployment {\@ABCNEWS/IPSOS}.
+1.  Ipsos uses standardized and pre-tested questions to ensure consistency and clarity. This approach helps maintain reliability and accuracy by identifying and addressing potential issues in question design before full deployment [@ABCNEWS_IPSOS].
 
-2\. Ipsos uses comprehensive likely voter models that consider factors like voter registration, voting intention, engagement with key issues, and carefully crafted question wording for different population (A, LV, RV), reflecting voter behaviors accurately and minimize ambiguity {\@ABCNEWS/IPSOS}.
+2.  Ipsos uses comprehensive likely voter models that consider factors like voter registration, voting intention, engagement with key issues, and carefully crafted question wording for different populations (A, LV, RV), reflecting voter behaviors accurately and minimizing ambiguity [@ABCNEWS_IPSOS].
 
-3\. Adapting questionnaires to current issues enhances pre-election prediction relevance {\@ABCNEWS/IPSOS}.
+3.  Adapting questionnaires to current issues enhances pre-election prediction relevance [@ABCNEWS_IPSOS].
 
-4\. Ipsos protects respondent privacy through anonymization, secure data handling, confidentiality assurances, aggregation of data in reporting, and informed consent, ensuring ethical standards in data collection {\@LangerResearchAssociates}.
+4.  Ipsos protects respondent privacy through anonymization, secure data handling, confidentiality assurances, aggregation of data in reporting, and informed consent, ensuring ethical standards in data collection [@ABCNews_2024a].
 
-**A.5.2 Limitations**
+A.5.2 Limitations
 
-1\. Detailed models and questions may cause survey fatigue among less-engaged respondents {\@sinickas2007finding}.
+1.  Detailed models and questions may cause survey fatigue among less-engaged respondents [@sinickas2007finding].
 
-2\. Ipsos surveys may face context and order effects, influencing responses based on question order {\@vmartin2006survey}.
+2.  Ipsos surveys may face context and order effects, influencing responses based on question order [@martin2006survey].
 
-3\. Reliance on likely voter traits could risk underrepresentation of groups perceived as unlikely voters, posing ethical considerations.
+3.  Reliance on likely voter traits could risk underrepresentation of groups perceived as unlikely voters, posing ethical considerations.
 
 **Appendix B: Idealized Methodology for US Presidential Election Forecasting Using Stratified Sampling**
 
@@ -624,50 +658,50 @@ This appendix details a methodology for forecasting the US presidential election
 
 **B.2 Budget allocation**
 
-**Online Panel Access:** \$30,000 
+**Online Panel Access:** \$30,000
 
 Access to pre-recruited, diverse online panels, allowing targeted sampling and demographic stratification.
 
-**Telephone Surveys with AI Assistance:** \$20,000 
+**Telephone Surveys with AI Assistance:** \$20,000
 
 Use computer-generated random sampling for phone outreach, including AI-assisted interviews to enhance consistency, focusing on hard-to-reach demographics.
 
-**Incentives for Respondents:** \$15,000 
+**Incentives for Respondents:** \$15,000
 
 Small incentives for survey participants, partially funded by the panel provider, to improve response rates.
 
-**Survey Platform (Google Forms):** \$0 
+**Survey Platform (Google Forms):** \$0
 
 Google Forms is free for basic use, allowing cost-effective data collection with skip logic to reduce respondent fatigue.
 
-**Data Validation and Quality Control:** \$5,000 
+**Data Validation and Quality Control:** \$5,000
 
 Includes demographic validation, speed checks, and attention checks to ensure high-quality responses and accuracy.
 
-**Post-Stratification Weighting:** \$5,000 
+**Post-Stratification Weighting:** \$5,000
 
 Application of weights to adjust for minor demographic imbalances and align with population benchmarks.
 
-**Poll Aggregation and Analysis:** \$15,000 
+**Poll Aggregation and Analysis:** \$15,000
 
 Use Bayesian updating and statistical analysis to combine results with other reputable polls, enhancing accuracy.
 
-**Reporting and Presentation:** \$8,000 
+**Reporting and Presentation:** \$8,000
 
 Preparation of a detailed report, including visualizations, summaries, and a 95% confidence interval to indicate forecast precision.
 
-**Contingency Fund:** \$7,000 
+**Contingency Fund:** \$7,000
 
 Reserve for unforeseen costs or additional recruitment needs.
 
 \
 **B.3 Sampling Approach**
 
-We will implement stratified sampling method, a form of probability sampling incorporating various demographic categories, ensuring proportional representation of each subgroup within the sample, thereby improving forecast accuracy by addressing potential voter turnout imbalances {\@alexander2023telling}. 
+We will implement stratified sampling method, a form of probability sampling incorporating various demographic categories, ensuring proportional representation of each subgroup within the sample, thereby improving forecast accuracy by addressing potential voter turnout imbalances [@alexander2023telling].
 
 **B.3.1 Define the strata**
 
-The population will be divided into distinct, mutually exclusive subgroups, or “strata,” based on key demographic variables: age, gender, race/ethnicity, education, income, and geographic region. Each stratum will be sampled proportionally to its representation within the US voter population, ensuring that the sample closely aligns with national demographics. Here we want to keep the strata relatively general to avoid potential over-fitting issues. 
+The population will be divided into distinct, mutually exclusive subgroups, or “strata,” based on key demographic variables: age, gender, race/ethnicity, education, income, and geographic region. Each stratum will be sampled proportionally to its representation within the US voter population, ensuring that the sample closely aligns with national demographics. Here we want to keep the strata relatively general to avoid potential over-fitting issues.
 
 **B.3.2 Define the sample size**
 
@@ -675,7 +709,7 @@ A sample size of 5,000 respondents will ensure adequate representation across st
 
 **B.3.3 Recruitment Strategy**
 
-1.Through partnering with other online panel partnership, we access large, diverse panels where participants are pre-recruited and actively engaged. These panels allow for stratification according to specific demographic criteria, improving efficiency and precision. 
+1.Through partnering with other online panel partnership, we access large, diverse panels where participants are pre-recruited and actively engaged. These panels allow for stratification according to specific demographic criteria, improving efficiency and precision.
 
 2\. Online panels typically offer incentives to their participants, funded by the panel provider or through the survey budget, reducing direct incentive costs.
 
@@ -683,7 +717,7 @@ A sample size of 5,000 respondents will ensure adequate representation across st
 
 **B.4 Data Collection and Survey Design**
 
-The survey will be hosted on Google Forms for cost-effective data collection. Google Forms  also offers skip logic, which will reduce survey Fatigue and improve response accuracy.
+The survey will be hosted on Google Forms for cost-effective data collection. Google Forms also offers skip logic, which will reduce survey Fatigue and improve response accuracy.
 
 **B.4.1 Survey Content**
 
@@ -849,15 +883,15 @@ B.5.1 Quality Control Measures
 
 **13. How closely are you following the 2024 presidential race?**
 
--   **Very closely** 
+-   Very closely 
 
--   **Fairly closely** 
+-   Fairly closely 
 
--   **Somewhat closely**
+-   Somewhat closely
 
--   **Not very closely**
+-   Not very closely
 
--   **Not at all** 
+-   Not at all 
 
 **14. Have you personally been contacted by the Harris or Trump campaign specifically asking for your vote (not including fundraising appeals)? (Check all that apply)**
 
@@ -884,30 +918,6 @@ B.5.1 Quality Control Measures
 -   Social Justice
 
 -   Other \[free-text\] 
-
-# Additional data details
-
-# Model details {#sec-model-details}
-
-## Posterior predictive check
-
-In @fig-ppcheckandposteriorvsprior-1 we implement a posterior predictive check. This shows...
-
-In @fig-ppcheckandposteriorvsprior-2 we compare the posterior with the prior. This shows...
-
-```{r}
-
-```
-
-## Diagnostics
-
-@fig-stanareyouokay-1 is a trace plot. It shows... This suggests...
-
-@fig-stanareyouokay-2 is a Rhat plot. It shows... This suggests...
-
-```{r}
-
-```
 
 \newpage
 
