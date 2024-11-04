@@ -75,7 +75,17 @@ $$
 \text{logit}(P(Y = 1)) = \beta_0 + \beta_1 \cdot \text{pollscore} + \beta_2 \cdot \text{sample\_size} + \beta_3 \cdot \text{party\_binary} + \beta_4 \cdot \text{pct}
 $$
 
-where: - Y = 1 represents the outcome that a candidate wins the poll. - pollscore refers to the quality score assigned to the poll, reflecting its reliability. - sample_size represents the number of respondents in the poll. - party_binary is a binary indicator of the candidate's party (1 for Democratic, 0 for others). - pct represents the percentage of support the candidate received in the poll.
+where:
+
+\- Y = 1 represents the outcome that a candidate wins the poll.
+
+\- "pollscore" refers to the quality score assigned to the poll, reflecting its reliability.
+
+\- "sample_size" represents the number of respondents in the poll.
+
+\- "party_binary" is a binary indicator of the candidate's party (1 for Democratic, 0 for others).
+
+\- "pct" represents the percentage of support the candidate received in the poll.
 
 ```{r}
 #| echo: false
@@ -107,18 +117,37 @@ cat(summary_text, sep = "\n")
 
 ```
 
-## Model Performance and Interpretation
+## Model Assumptions
+
+The assumptions for the logistic regression model include:
+
+1.  **Linearity of Logit**: The relationship between the predictors and the logit of the outcome is linear.
+
+2.  **Independence of Observations**: Each polling data entry is independent of others.
+
+3.  **No Perfect Multicollinearity**: Predictors are not perfectly correlated.
+
+4.  **Sufficient Sample Size**: The sample size is large enough to provide stable estimates for each predictor.
+
+These assumptions are important to validate the model's reliability and interpretation.
+
+## Model Fitting in R
+
+The model fitting was performed using the `rstanarm` package, which allows for Bayesian inference. The logistic regression model was fitted using polling data, with predictors such as poll score, sample size, party affiliation, and poll percentage.
+
+## Model Results
+
+### Model Estimates and Key Predictors
 
 The model's output includes estimates for each predictor, providing insights into their relative importance in predicting a candidate's probability of winning. The summary of the model reveals the following key points:
 
-Poll Score (pollscore): The coefficient for pollscore indicates the extent to which the quality of a poll influences the predicted probability of a candidate winning. Higher-quality polls are expected to provide more reliable estimates, and therefore have a stronger effect on the predicted outcome.
+-   **Poll Score (pollscore)**: The coefficient for `pollscore` indicates the extent to which the quality of a poll influences the predicted probability of a candidate winning. Higher-quality polls are expected to provide more reliable estimates, and therefore have a stronger effect on the predicted outcome.
 
-Sample Size (sample_size): The coefficient for sample_size shows the influence of the number of respondents on the model. Polls with larger sample sizes are generally more reliable, contributing positively to the accuracy of predictions.
+-   **Sample Size (sample_size)**: The coefficient for `sample_size` shows the influence of the number of respondents on the model. Polls with larger sample sizes are generally more reliable, contributing positively to the accuracy of predictions.
 
-Party (party_binary): The party_binary variable highlights any potential advantage or disadvantage linked to party affiliation, with 1 representing Democratic candidates. This variable helps capture any systemic biases or influences based on party identification.
+-   **Party (party_binary)**: The `party_binary` variable highlights any potential advantage or disadvantage linked to party affiliation, with 1 representing Democratic candidates. This variable helps capture any systemic biases or influences based on party identification.
 
-Poll Percentage (pct): The pct variable is a key predictor as it directly measures the level of support a candidate receives. A higher percentage is expected to lead to a higher probability of winning.
-
+-   **Poll Percentage (pct)**: The `pct` variable is a key predictor as it directly measures the level of support a candidate receives. A higher percentage is expected to lead to a higher probability of winning.
 ```{r}
 #| echo: false
 
@@ -136,7 +165,17 @@ saveRDS(win_model, "../models/election_win_model.rds")
 write_csv(polls_data_cleaned, "../data/04-model_results/polls_with_predictions.csv")
 ```
 
-The model described above allows us to predict the likelihood of each candidate winning based on the given polling data, using a logistic regression approach. The model was implemented using rstanarm to provide a Bayesian estimation, which helps incorporate uncertainty into our predictions.
+### Model Fit and Diagnostics
+
+The model fit was evaluated using the posterior predictive checks and residual diagnostics. The Bayesian logistic regression was fit with priors centered at zero, allowing for uncertainty in estimates. Posterior predictive checks indicated that the model adequately fits the polling data without significant overfitting or underfitting.
+
+Further, the goodness-of-fit metrics and the residual analysis suggest that the model is able to capture key trends in the polling data, although potential areas for improvement include additional predictors or modeling interactions between variables.
+
+## Model Performance and Interpretation
+
+### Interpretation of Poll Percentage vs. Predicted Win Probability Plot
+
+This plot visualizes the relationship between the percentage of poll support (`pct`) and the predicted win probability for each candidate. The red line represents a smoothed curve showing general trends in the data. As expected, higher poll percentages are associated with higher probabilities of winning. This helps confirm that the model captures the influence of poll percentage effectively.
 
 ```{r}
 #| echo: false
@@ -149,7 +188,12 @@ polls_data_cleaned %>%
        x = "Poll Percentage",
        y = "Predicted Win Probability") +
   theme_minimal()
+
 ```
+
+### Interpretation of Predicted Win Probabilities by Party Plot
+
+This boxplot compares the predicted win probabilities for candidates based on their party affiliation (Republican vs. Democratic). It shows that, on average, Democratic candidates have a higher predicted win probability in the polls. This indicates a possible party-related influence on the polling data, as captured by the model.
 
 ```{r}
 #| echo: false
@@ -162,7 +206,12 @@ polls_data_cleaned %>%
        x = "Party",
        y = "Predicted Win Probability") +
   theme_minimal()
+
 ```
+
+### Interpretation of Predicted Win Probability Distribution Plot
+
+This histogram shows the distribution of predicted win probabilities across all candidates. The distribution reveals how many candidates have higher or lower chances of winning based on polling data. It provides insights into the overall competitiveness of the election, with many candidates clustered around lower probabilities of winning.
 
 ```{r}
 #| echo: false
@@ -173,7 +222,9 @@ ggplot(polls_data_cleaned, aes(x = predicted_win_prob)) +
        x = "Predicted Win Probability",
        y = "Count") +
   theme_minimal()
+
 ```
+
 
 # Discussion
 
