@@ -17,6 +17,9 @@ sample_size_min <- 500
 sample_size_max <- 5000
 
 #### Simulate data ####
+# Parties
+parties <- c("Democratic", "Republican")
+
 # State names
 states <- c("Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado",
             "Connecticut", "Delaware", "Florida", "Georgia", "Hawaii", "Idaho", 
@@ -28,9 +31,6 @@ states <- c("Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado"
             "Pennsylvania", "Rhode Island", "South Carolina", "South Dakota", 
             "Tennessee", "Texas", "Utah", "Vermont", "Virginia", 
             "Washington", "West Virginia", "Wisconsin", "Wyoming")
-
-# Parties
-parties <- c("Democratic", "Republican")
 
 # Generate sample data
 poll_scores <- rnorm(n_samples, mean = 0, sd = 1) # Simulate poll scores with a normal distribution
