@@ -72,6 +72,10 @@ train_indices <- sample(seq_len(nrow(clean_president_polls)), size = 0.7 * nrow(
 training_data <- clean_president_polls[train_indices, ] %>% mutate(pct_scaled = scale(pct))
 testing_data <- clean_president_polls[-train_indices, ] %>% filter(pollster %in% unique(training_data$pollster))
 
+# Ensure 'state' and 'pollster' levels in testing_data match those in training_data
+testing_data$state <- factor(testing_data$state, levels = levels(training_data$state))
+testing_data$pollster <- factor(testing_data$pollster, levels = levels(training_data$pollster))
+
 # Fit Bayesian model with training data
 model_validation_train <- stan_glmer(
   is_harris ~ pct + (1 | pollster) + (1 | state),
@@ -88,7 +92,11 @@ model_validation_train <- stan_glmer(
 # Posterior predictive check
 pp_check(model_validation_train)
 
-# Make predictions on the test set for the Bayesian model
+# Filter out rows with new levels of 'state' or 'pollster' that were not seen in training data
+testing_data <- testing_data %>%
+  filter(state %in% levels(training_data$state), pollster %in% levels(training_data$pollster))
+
+# Make predictions on the filtered test set for the Bayesian model
 testing_data <- testing_data |> 
   mutate(
     predicted_prob_harris = posterior_predict(model_validation_train, newdata = testing_data, type = "response") |> colMeans(),
