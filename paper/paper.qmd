@@ -281,19 +281,18 @@ detailed_stats <- data %>%
 
 knitr::kable(detailed_stats)
 
-
 ```
 The national average support percentages, along with other summary statistics for Donald Trump and Kamala Harris, are summarized in @tbl-1. This table presents average support, standard deviation, and the range of polling support values for each candidate, providing insights into the predicted national favorability for both candidates.
 
 Summary of Key Findings:
 
-- **Average Support**: Kamala Harris has a slight lead over Donald Trump, with an average predicted national support of 47.39% compared to Trump’s 45.65%. This narrow margin points to a competitive race, with neither candidate establishing a decisive lead across the polls.
+- **Average Support**: Kamala Harris has a slight lead over Donald Trump, with an average predicted national support of 47.6% compared to Trump’s 46.85%. This narrow margin points to a competitive race, with neither candidate establishing a decisive lead across the polls.
 
-- **Variability in Support**: The standard deviation values indicate greater variability in Trump’s support (5.33%) compared to Harris’s (4.38%). This suggests that Trump’s polling performance fluctuates more widely, which could be due to varying levels of regional support or shifts in public opinion over time.
+- **Variability in Support**: The standard deviation values indicate greater variability in Trump’s support (4.41%) compared to Harris’s (4.35%). This suggests that Trump’s polling performance fluctuates more widely, which could be due to varying levels of regional support or shifts in public opinion over time.
 
-- **Support Range**: Both candidates display a considerable range in support across polls, with Trump’s polling support varying between 21.0% and 70.0%, and Harris’s between 25.0% and 70.0%. This variability highlights the diversity in voter sentiment, potentially influenced by geographic, demographic, or temporal factors.
+- **Support Range**: Both candidates display a considerable range in support across polls, with Trump’s polling support varying between 27.0% and 70.0%, and Harris’s between 25.0% and 70.0%. This variability highlights the diversity in voter sentiment, potentially influenced by geographic, demographic, or temporal factors.
 
-- **Poll Count**: The higher number of polls for Trump (2,487) compared to Harris (1,253) suggests more extensive polling coverage for Trump, which may lend more stability to his average support estimate.
+- **Poll Count**: The higher number of polls for Trump (1,121) compared to Harris (1,125) suggests more extensive polling coverage for Harris, which may lend more stability to her average support estimate.
 
 These summary statistics indicate a close national race, with Harris holding a slight edge in average support. Trump’s higher standard deviation and broader polling range highlight a more variable support base, suggesting potential swings in support across regions or voter groups. The consistency in Harris’s polling, coupled with her narrow lead, suggests steady favorability, but both candidates remain competitive nationally, underscoring the close nature of the race.
 
@@ -302,8 +301,9 @@ These summary statistics indicate a close national race, with Harris holding a s
 #| message: false
 #| label: fig-figure1
 #| fig_caption: true
-#| fig-cap:"Average support difference by state between Kamala Harris and Donald Trump. Blue indicates stronger support for Harris, red for Trump, and white for nearly equal support."
+#| fig-cap: "Average support difference by state between Kamala Harris and Donald Trump. Blue indicates stronger support for Harris, red for Trump, and white for nearly equal support."
 #| echo: false
+
 # Filter data for Harris and Trump, then calculate average support by state for each
 harris_data <- data %>%
   filter(candidate_name == "Kamala Harris") %>%
@@ -342,20 +342,17 @@ ggplot(map_data, aes(long, lat, group = group, fill = support_diff)) +
 ```
 @fig-figure1 visualizes the difference in average polling support between Kamala Harris and Donald Trump across U.S. states. The map uses a color gradient to convey where each candidate has more support, with shades of blue indicating higher support for Harris, red indicating higher support for Trump, and white representing near-equal support levels. This visual provides a geographic perspective on the polling landscape, highlighting regional strongholds, competitive states, and areas of significant support advantage for each candidate.
 
-
-
 ```{r}
 #| warning: false
 #| message: false
 #| label: fig-figure2
 #| fig_caption: true
-#| fig-cap:"Battleground States with Narrow Polling Margins"
+#| fig-cap: "Battleground States with Narrow Polling Margins"
 #| echo: false
 
 
-# Calculate the average polling margin between the top two candidates in each state
+data <- read_csv("cleaned_president_polls.csv")
 important_states <- data %>%
-  filter(party_binary == 1) %>%
   group_by(state, candidate_name) %>%
   summarize(avg_pct = mean(pct, na.rm = TRUE)) %>%
   arrange(state, desc(avg_pct)) %>%
@@ -368,12 +365,13 @@ important_states <- data %>%
 ggplot(important_states, aes(x = reorder(state, margin), y = margin)) +
   geom_bar(stat = "identity", fill = "red") +
   coord_flip() +
+  labs(title = "Battleground States with Narrow Polling Margins",
+       x = "State",
+       y = "Polling Margin (%)") +
   theme_minimal()
+
 ```
 @fig-figure2 visualizes the polling margins between the top two candidates in various states. Each bar represents a state, with the length of the bar corresponding to the polling margin—the difference in polling percentage between the leading candidate and the runner-up. States are ordered by margin, from the narrowest at the bottom (indicating the closest contest) to the widest margin at the top. For instance, states like Arizona, Minnesota, and Michigan show extremely close polling margins, meaning that support for the top two candidates is nearly evenly split. These states are critical battlegrounds where even a small shift in voter preference could change the outcome. For example, Arizona has the smallest margin, making it a highly competitive state. Otherwise, states like Washington, California, and South Dakota have wider margins, suggesting a more clear lead for one candidate. While they are still classified as battlegrounds due to the selected margin threshold, they are less competitive than states at the bottom.
-
-
-
 ```{r}
 #| label: tbl-2
 #| echo: false
@@ -382,7 +380,7 @@ ggplot(important_states, aes(x = reorder(state, margin), y = margin)) +
 #| tbl-cap: "Predicted support percentages for Kamala Harris and Donald Trump in key competitive states, showing the anticipated winner and the percentage margin of support in each state."
 
 # Load the dataset
-state_support_data <- read.csv("/Users/apple/Desktop/cleaned_president_polls.csv")
+state_support_data <- read_parquet("/Users/apple/Desktop/cleaned_president_polls.parquet")
 
 # Define the list of states you are interested in
 selected_states <- c("Pennsylvania", "Michigan", "Wisconsin", "Arizona", "Georgia", "North Carolina", "Nevada")
@@ -419,6 +417,7 @@ knitr::kable(final_table)
 
 ```
 In @fig-figure2, We have figured out the key states that relatively important to the solutions of election. @tbl-2 presents the support percentages for Kamala Harris and Donald Trump across seven states, alongside a prediction of the winner based on the higher support percentage, and the margin of support difference between the two candidates. The table reveals that in several states (Arizona, Georgia, Nevada, North Carolina, and Pennsylvania), the margin between Kamala Harris and Donald Trump is extremely narrow (all under 2%). This tight margin indicates that these states are highly competitive, with neither candidate having a decisive lead. Such close races mean these states could easily swing in favor of either candidate depending on small shifts in public opinion or voter turnout. While Harris appears to have a slight edge in most of the states listed, the narrow margins mean that the race remains highly uncertain and dynamic.
+
 
 
 # Discussion
